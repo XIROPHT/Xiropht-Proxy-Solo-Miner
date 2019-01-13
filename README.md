@@ -1,6 +1,12 @@
 # Xiropht-Proxy-Solo-Miner
 Xiropht Proxy Solo Miner is usefull for share different part of the current block to other miners.
 
+**Be carefull , we are currently in phase of test , all versions released and uploaded are compiled in debug mode for permit everyone to get informations of possible issues from log files until to release the main phase network.**
+
+**Once the main phase network is released, all next update will are in release mode for disable log file and debug mode.**
+
+**In production, we suggest to compile in Release Mode for disable log files.**
+
 **Compatibility:** Windows (Visual Studio), Linux (Mono), Android (with Xamarin or Mono), MacOSX (with Xamarin or Mono)
 
 
