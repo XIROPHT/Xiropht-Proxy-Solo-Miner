@@ -73,9 +73,11 @@ namespace Xiropht_Proxy_Solo_Miner
             {
                 while(true)
                 {
-                    Thread.Sleep(1000);
+                    Thread.Sleep(100);
                     if (!IsConnected || _lastPacketReceivedFromBlockchain +5 < DateTimeOffset.Now.ToUnixTimeSeconds() || !classSeedNodeConnector.GetStatusConnectToSeed())
                     {
+                        NetworkProxy.StopProxy();
+                        IsConnected = false;
                         if (NetworkProxy.ListOfMiners != null)
                         {
                             if (NetworkProxy.ListOfMiners.Count > 0)
@@ -97,6 +99,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                     }
                                 }
                             }
+                            NetworkProxy.ListOfMiners.Clear();
                         }
                         LoginAccepted = false;
                         while (!await ConnectToBlockchainAsync())

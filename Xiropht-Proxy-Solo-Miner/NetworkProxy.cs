@@ -30,7 +30,7 @@ namespace Xiropht_Proxy_Solo_Miner
 
             ThreadProxyListen = new Thread(async delegate ()
             {
-                while (true)
+                while (NetworkBlockchain.IsConnected && ProxyStarted)
                 {
                     try
                     {
@@ -92,15 +92,28 @@ namespace Xiropht_Proxy_Solo_Miner
                     }
                     catch
                     {
-                        ConsoleLog.WriteLine("Proxy error exception on listen, restart..");
-                        ProxyListener?.Stop();
-                        ProxyListener = null;
-                        ProxyListener = new TcpListener(IPAddress.Parse(Config.ProxyIP), Config.ProxyPort);
-                        ProxyListener.Start();
                     }
                 }
             });
             ThreadProxyListen.Start();
+        }
+
+        public static void StopProxy()
+        {
+            ProxyStarted = false;
+            try
+            {
+                ProxyListener.Stop();
+            }
+            catch
+            {
+
+            }
+            if (ThreadProxyListen != null && (ThreadProxyListen.IsAlive || ThreadProxyListen != null))
+            {
+                ThreadProxyListen.Abort();
+                GC.SuppressFinalize(ThreadProxyListen);
+            }
         }
     }
 
@@ -178,7 +191,7 @@ namespace Xiropht_Proxy_Solo_Miner
             //await Task.Run(() => CheckMinerConnectionAsync()).ConfigureAwait(false);
             await Task.Factory.StartNew(CheckMinerConnectionAsync, CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).ConfigureAwait(false);
 
-            while (MinerConnected)
+            while (MinerConnected && NetworkBlockchain.IsConnected)
             {
                 if (!MinerConnected)
                 {
