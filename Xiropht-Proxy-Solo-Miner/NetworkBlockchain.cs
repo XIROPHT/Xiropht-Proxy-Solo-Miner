@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Xiropht_Connector_All.Seed;
+using Xiropht_Connector_All.Setting;
 using Xiropht_Connector_All.SoloMining;
 using Xiropht_Connector_All.Utils;
 
@@ -113,6 +114,7 @@ namespace Xiropht_Proxy_Solo_Miner
                         if (!await SendPacketAsync(Program.NetworkCertificate, false))
                         {
                             ConsoleLog.WriteLine("Can't send certificate, reconnect now..");
+                            IsConnected = false;
                         }
                         else
                         {
@@ -122,11 +124,17 @@ namespace Xiropht_Proxy_Solo_Miner
                             if (!await SendPacketAsync("MINER|" + Config.WalletAddress, true))
                             {
                                 ConsoleLog.WriteLine("Can't login to the network, reconnect now.");
+                                IsConnected = false;
                             }
                             else
                             {
-                                ConsoleLog.WriteLine("Login successfully sent, waiting confirmation..");
+                                ConsoleLog.WriteLine("Login successfully sent, waiting confirmation.. (Wait 5 seconds maximum.)");
                                 IsConnected = true;
+                                Thread.Sleep(ClassConnectorSetting.MaxTimeoutConnect);
+                                if (!LoginAccepted)
+                                {
+                                    IsConnected = false;
+                                }
                             }
                         }
                     }
