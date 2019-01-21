@@ -19,7 +19,6 @@ namespace Xiropht_Proxy_Solo_Miner
         public static List<string> ListOfMiningMethodName = new List<string>();
         public static List<string> ListOfMiningMethodContent = new List<string>();
         private static Thread ThreadListenBlockchain;
-        private static Thread ThreadAskBlocktemplate;
         private static Thread ThreadAskMiningMethod;
         private static long _lastPacketReceivedFromBlockchain;
 
@@ -44,7 +43,7 @@ namespace Xiropht_Proxy_Solo_Miner
         /// Connect to the network of blockchain.
         /// </summary>
         /// <returns></returns>
-        public static async System.Threading.Tasks.Task<bool> ConnectToBlockchainAsync()
+        public static async Task<bool> ConnectToBlockchainAsync()
         {
 
             classSeedNodeConnector?.DisconnectToSeed();
@@ -229,7 +228,7 @@ namespace Xiropht_Proxy_Solo_Miner
         /// Receive packet from the blockchain.
         /// </summary>
         /// <param name="packet"></param>
-        private static async System.Threading.Tasks.Task<bool> HandlePacketBlockchainAsync(string packet)
+        private static async Task<bool> HandlePacketBlockchainAsync(string packet)
         {
             var splitPacket = packet.Split(new[] { "|" }, StringSplitOptions.None);
             switch(splitPacket[0])
@@ -237,6 +236,7 @@ namespace Xiropht_Proxy_Solo_Miner
                 case ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendLoginAccepted:
                     LoginAccepted = true;
                     ConsoleLog.WriteLine("Proxy login accepted, ask mining methods.");
+                    NetworkProxy.StartProxy();
                     AskMiningMethod();
                     break;
                 case ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendListBlockMethod:
@@ -310,10 +310,6 @@ namespace Xiropht_Proxy_Solo_Miner
                         ConsoleLog.WriteLine("New block to mining: " + splitBlockContent[0]);
                         Blocktemplate = splitPacket[1];
                         await SpreadJobAsync();
-                    }
-                    if (!NetworkProxy.ProxyStarted)
-                    {
-                        NetworkProxy.StartProxy();
                     }
                     break;
                 case ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus:

@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using Xiropht_Connector_All.SoloMining;
 using Xiropht_Connector_All.Utils;
 
@@ -19,7 +15,16 @@ namespace Xiropht_Proxy_Solo_Miner
         public static string GetCurrentPath()
         {
             string path = Directory.GetCurrentDirectory();
-            if (Environment.OSVersion.Platform == PlatformID.Unix)
+            if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
+            {
+                path = path.Replace("\\", "/");
+            }
+            return path;
+        }
+
+        public static string ConvertPath(string path)
+        {
+            if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
             {
                 path = path.Replace("\\", "/");
             }
@@ -33,7 +38,7 @@ namespace Xiropht_Proxy_Solo_Miner
         public static string GetCurrentPathFile()
         {
             string path = Directory.GetCurrentDirectory() + "\\config.ini";
-            if (Environment.OSVersion.Platform == PlatformID.Unix)
+            if (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
             {
                 path = path.Replace("\\", "/");
             }

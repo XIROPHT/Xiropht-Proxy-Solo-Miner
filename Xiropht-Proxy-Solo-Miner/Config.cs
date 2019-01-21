@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Xiropht_Proxy_Solo_Miner
+﻿namespace Xiropht_Proxy_Solo_Miner
 {
     public class Config
     {
