@@ -191,6 +191,7 @@ namespace Xiropht_Proxy_Solo_Miner
                     {
                         ConsoleLog.WriteLine("Certificate sent, start to login..");
                         NetworkBlockchain.ListenBlockchain();
+                        Thread.Sleep(1000);
                         if (!await NetworkBlockchain.SendPacketAsync("MINER|" + Config.WalletAddress, true))
                         {
                             ConsoleLog.WriteLine("Can't login to the network, reconnect now.");
@@ -208,7 +209,6 @@ namespace Xiropht_Proxy_Solo_Miner
             {
                 while(true)
                 {
-                    Thread.Sleep(100);
                     var command = Console.ReadLine().Split(new[] { " " }, StringSplitOptions.None);
 
 

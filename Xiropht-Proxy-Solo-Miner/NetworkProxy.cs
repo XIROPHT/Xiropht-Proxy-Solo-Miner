@@ -85,7 +85,8 @@ namespace Xiropht_Proxy_Solo_Miner
                         {
                             ListOfMiners.Add(cw);
                         }
-                        new Thread(async () => await cw.HandleMinerAsync()).Start();
+
+                        await Task.Factory.StartNew(() => cw.HandleMinerAsync(), CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).ConfigureAwait(false);
 
                     }
                     catch
@@ -357,7 +358,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                 var calculation = splitPacket[3];
                                 var hashShare = splitPacket[4];
                                 var blockId = splitPacket[5];
-                                if (NetworkBlockchain.CurrentBlockIndication == Utils.ConvertStringtoMD5(encryptedShare))
+                                if (NetworkBlockchain.CurrentBlockIndication == Utils.ConvertToSha512(encryptedShare))
                                 {
                                     if (!await NetworkBlockchain.SendPacketAsync(packet, true).ConfigureAwait(false))
                                     {
@@ -419,7 +420,7 @@ namespace Xiropht_Proxy_Solo_Miner
 
                                                 if (encryptedShare == encryptedShareTest)
                                                 {
-                                                    string hashShareTest = Utils.ConvertStringtoMD5(encryptedShareTest);
+                                                    string hashShareTest = Utils.ConvertToSha512(encryptedShareTest);
                                                     if (hashShare == hashShareTest)
                                                     {
                                                         /*  if (!SendPacket(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareGood))
@@ -489,7 +490,7 @@ namespace Xiropht_Proxy_Solo_Miner
                         else
                         {
                             var encryptedShare = splitPacket[1];
-                            if (NetworkBlockchain.CurrentBlockIndication == Utils.ConvertStringtoMD5(encryptedShare))
+                            if (NetworkBlockchain.CurrentBlockIndication == Utils.ConvertToSha512(encryptedShare))
                             {
                                 TotalGoodShare++;
                                 if (!await NetworkBlockchain.SendPacketAsync(packet, true).ConfigureAwait(false))
@@ -501,7 +502,7 @@ namespace Xiropht_Proxy_Solo_Miner
                             {
                                 Console.WriteLine("Share md5 wrong: " + encryptedShare);
                                 TotalInvalidShare++;
-                                if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad))
+                                if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad).ConfigureAwait(false))
                                 {
                                     MinerConnected = false;
                                 }
@@ -535,8 +536,8 @@ namespace Xiropht_Proxy_Solo_Miner
             try
             {
                 var bytePacket = Encoding.UTF8.GetBytes(packet);
-                await tcpMiner.GetStream().WriteAsync(bytePacket, 0, bytePacket.Length);
-                await tcpMiner.GetStream().FlushAsync();
+                await tcpMiner.GetStream().WriteAsync(bytePacket, 0, bytePacket.Length).ConfigureAwait(false);
+                await tcpMiner.GetStream().FlushAsync().ConfigureAwait(false);
             }
             catch
             {

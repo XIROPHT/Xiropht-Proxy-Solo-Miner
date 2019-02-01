@@ -26,7 +26,7 @@ namespace Xiropht_Proxy_Solo_Miner
             return false;
         }
 
-        public static string ConvertStringtoMD5(string str)
+        public static string ConvertToSha512(string str)
         {
             var bytes = Encoding.ASCII.GetBytes(str);
             using (var hash = System.Security.Cryptography.SHA512.Create())

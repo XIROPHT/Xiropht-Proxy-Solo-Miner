@@ -74,7 +74,7 @@ namespace Xiropht_Proxy_Solo_Miner
                 while(true)
                 {
                     Thread.Sleep(100);
-                    if (!IsConnected || _lastPacketReceivedFromBlockchain +5 < DateTimeOffset.Now.ToUnixTimeSeconds() || !classSeedNodeConnector.GetStatusConnectToSeed())
+                    if (!IsConnected || !classSeedNodeConnector.GetStatusConnectToSeed())
                     {
                         NetworkProxy.StopProxy();
                         IsConnected = false;
@@ -159,7 +159,7 @@ namespace Xiropht_Proxy_Solo_Miner
                 {
                     try
                     {
-                        string packet = await classSeedNodeConnector.ReceivePacketFromSeedNodeAsync(Program.NetworkCertificate, false, true);
+                        string packet = await classSeedNodeConnector.ReceivePacketFromSeedNodeAsync(Program.NetworkCertificate, false, true).ConfigureAwait(false);
                         if (packet == ClassSeedNodeStatus.SeedError)
                         {
                             ConsoleLog.WriteLine("Connection to network lost, reconnect in 5 seconds..");
@@ -392,7 +392,7 @@ namespace Xiropht_Proxy_Solo_Miner
             return true;
         }
 
-        public static async System.Threading.Tasks.Task SpreadJobAsync()
+        public static async Task SpreadJobAsync()
         {
             var splitBlockContent = Blocktemplate.Split(new[] { "&" }, StringSplitOptions.None);
 
@@ -571,7 +571,7 @@ namespace Xiropht_Proxy_Solo_Miner
         /// <param name="packet"></param>
         /// <param name="encrypted"></param>
         /// <returns></returns>
-        public static async System.Threading.Tasks.Task<bool> SendPacketAsync(string packet, bool encrypted)
+        public static async Task<bool> SendPacketAsync(string packet, bool encrypted)
         {
             if (encrypted)
             {
