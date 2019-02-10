@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Threading;
-using Xiropht_Connector_All.SoloMining;
 using Xiropht_Connector_All.Utils;
 
 namespace Xiropht_Proxy_Solo_Miner
@@ -47,26 +48,6 @@ namespace Xiropht_Proxy_Solo_Miner
 
         public static void ReadConfig()
         {
-            AppDomain.CurrentDomain.UnhandledException += delegate (object sender, UnhandledExceptionEventArgs args2)
-            {
-                var filePath = ".\\error_proxyminer.txt";
-                var exception = (Exception)args2.ExceptionObject;
-                using (var writer = new StreamWriter(filePath, true))
-                {
-                    writer.WriteLine("Message :" + exception.Message + "<br/>" + Environment.NewLine +
-                                     "StackTrace :" +
-                                     exception.StackTrace +
-                                     "" + Environment.NewLine + "Date :" + DateTime.Now);
-                    writer.WriteLine(Environment.NewLine +
-                                     "-----------------------------------------------------------------------------" +
-                                     Environment.NewLine);
-                }
-
-                System.Diagnostics.Trace.TraceError(exception.StackTrace);
-
-                Environment.Exit(1);
-
-            };
             if (File.Exists(GetCurrentPathFile()))
             {
                 StreamReader reader = new StreamReader(GetCurrentPathFile());
@@ -85,13 +66,6 @@ namespace Xiropht_Proxy_Solo_Miner
                     else if (line.Contains("PROXY_IP="))
                     {
                         Config.ProxyIP = line.Replace("PROXY_IP=", "");
-                    }
-                    else if (line.Contains("CHECK_SHARE="))
-                    {
-                        if (line.Replace("CHECK_SHARE=", "") == "Y")
-                        {
-                            Config.CheckShare = true;
-                        }
                     }
                     else if (line.Contains("WRITE_LOG="))
                     {
@@ -112,11 +86,6 @@ namespace Xiropht_Proxy_Solo_Miner
                 Config.ProxyIP = Console.ReadLine();
                 Console.WriteLine("Select a port to bind: ");
                 Config.ProxyPort = int.Parse(Console.ReadLine());
-                Console.WriteLine("Do you want check each share from your miners ? [Y/N]: ");
-                if (Console.ReadLine() == "Y" || Console.ReadLine() == "y")
-                {
-                    Config.CheckShare = true;
-                }
                 Console.WriteLine("Do you want enable log system ? [Y/N]: ");
                 if (Console.ReadLine() == "Y" || Console.ReadLine() == "y")
                 {
@@ -129,16 +98,6 @@ namespace Xiropht_Proxy_Solo_Miner
                 writeConfig.Flush();
                 writeConfig.WriteLine("PROXY_IP=" + Config.ProxyIP);
                 writeConfig.Flush();
-                if (Config.CheckShare)
-                {
-                    writeConfig.WriteLine("CHECK_SHARE=Y");
-                    writeConfig.Flush();
-                }
-                else
-                {
-                    writeConfig.WriteLine("CHECK_SHARE=N");
-                    writeConfig.Flush();
-                }
                 if (Config.WriteLog)
                 {
                     writeConfig.WriteLine("WRITE_LOG=Y");
@@ -155,15 +114,36 @@ namespace Xiropht_Proxy_Solo_Miner
 
         static void Main(string[] args)
         {
+#if DEBUG
+            AppDomain.CurrentDomain.UnhandledException += delegate (object sender, UnhandledExceptionEventArgs args2)
+            {
+                var filePath = ConvertPath(Directory.GetCurrentDirectory() + "\\error_proxy_miner.txt");
+                var exception = (Exception)args2.ExceptionObject;
+                using (var writer = new StreamWriter(filePath, true))
+                {
+                    writer.WriteLine("Message :" + exception.Message + "<br/>" + Environment.NewLine +
+                                     "StackTrace :" +
+                                     exception.StackTrace +
+                                     "" + Environment.NewLine + "Date :" + DateTime.Now);
+                    writer.WriteLine(Environment.NewLine +
+                                     "-----------------------------------------------------------------------------" +
+                                     Environment.NewLine);
+                }
+
+                Trace.TraceError(exception.StackTrace);
+
+                Environment.Exit(1);
+
+            };
+#endif
+            Thread.CurrentThread.Name = Path.GetFileName(Environment.GetCommandLineArgs()[0]);
+            ConsoleLog.WriteLine("Xiropht Proxy Solo Miner - " + Assembly.GetExecutingAssembly().GetName().Version + "b");
+
             ReadConfig();
             if (Config.WriteLog)
             {
                 ConsoleLog.InitializeLog();
                 ConsoleLog.WriteLine("Write Log Enabled.");
-            }
-            if (Config.CheckShare)
-            {
-                ConsoleLog.WriteLine("Check Share Enabled.");
             }
             ConsoleLog.WriteLine("Wallet Address selected: " + Config.WalletAddress);
             ConsoleLog.WriteLine("Proxy IP Selected: " + Config.ProxyIP);
@@ -205,23 +185,21 @@ namespace Xiropht_Proxy_Solo_Miner
                 }
             });
             ThreadCheckNetworkConnection.Start();
-            new Thread(async delegate ()
+            new Thread(delegate ()
             {
-                while(true)
+                while (true)
                 {
                     var command = Console.ReadLine().Split(new[] { " " }, StringSplitOptions.None);
 
 
-                    switch(command[0])
+                    switch (command[0])
                     {
                         case "h":
                             ConsoleLog.WriteLine("h - Show command list.");
                             ConsoleLog.WriteLine("s - Show proxy stats with miners stats.");
-                            ConsoleLog.WriteLine("d - Disable Check Share.");
-                            ConsoleLog.WriteLine("e - Enable Check Share. --> This mode has been made for prove this is impossible to make a pool (Ex: You can't handle 2000 share per second per miners)");
                             break;
                         case "s":
-                            ConsoleLog.WriteLine(">> If you don't use check share system, that's mean invalid share give orphaned block <<");
+                            ConsoleLog.WriteLine(">> Invalid share can mean you have get orphaned block <<");
                             ConsoleLog.WriteLine("Total block unlock: " + NetworkBlockchain.TotalBlockUnlocked);
                             ConsoleLog.WriteLine("Total block bad unlock: " + NetworkBlockchain.TotalBlockWrong);
                             if (NetworkBlockchain.IsConnected)
@@ -254,53 +232,18 @@ namespace Xiropht_Proxy_Solo_Miner
                                         ConsoleLog.WriteLine("Miner total share: " + NetworkProxy.ListOfMiners[i].TotalShare);
                                         ConsoleLog.WriteLine("Miner total good share: " + NetworkProxy.ListOfMiners[i].TotalGoodShare);
                                         ConsoleLog.WriteLine("Miner total invalid share: " + NetworkProxy.ListOfMiners[i].TotalInvalidShare);
+                                        string version = NetworkProxy.ListOfMiners[i].MinerVersion;
+                                        if (string.IsNullOrEmpty(version))
+                                        {
+                                            version = "Unknown";
+                                        }
+                                        ConsoleLog.WriteLine("Miner version: " + version);
 
                                     }
                                 }
                             }
                             ConsoleLog.WriteLine("Total miners connected: " + totalMinerConnected);
 
-                            break;
-                        case "e":
-                            if (NetworkProxy.ListOfMiners.Count > 0)
-                            {
-                                for (int i = 0; i < NetworkProxy.ListOfMiners.Count; i++)
-                                {
-                                    if (i < NetworkProxy.ListOfMiners.Count)
-                                    {
-                                        if (NetworkProxy.ListOfMiners[i].MinerConnected)
-                                        {
-
-                                            if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendEnableCheckShare))
-                                            {
-                                                NetworkProxy.ListOfMiners[i].DisconnectMiner();
-                                            }
-                                        }
-
-                                    }
-                                }
-                                Config.CheckShare = true;
-                            }
-                            break;
-                        case "d":
-                            if (NetworkProxy.ListOfMiners.Count > 0)
-                            {
-                                for (int i = 0; i < NetworkProxy.ListOfMiners.Count; i++)
-                                {
-                                    if (i < NetworkProxy.ListOfMiners.Count)
-                                    {
-                                        if (NetworkProxy.ListOfMiners[i].MinerConnected)
-                                        {
-                                            if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendDisableCheckShare))
-                                            {
-                                                NetworkProxy.ListOfMiners[i].DisconnectMiner();
-                                            }
-                                        }
-
-                                    }
-                                }
-                                Config.CheckShare = false;
-                            }
                             break;
                     }
                 }

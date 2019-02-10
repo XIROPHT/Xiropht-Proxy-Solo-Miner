@@ -74,7 +74,7 @@ namespace Xiropht_Proxy_Solo_Miner
                         return AesCrypt.EncryptString(result, key, keyByte);
                 }
             }
-            catch (Exception erreur)
+            catch (Exception)
             {
             }
             return "WRONG";

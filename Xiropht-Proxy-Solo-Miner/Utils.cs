@@ -1,5 +1,4 @@
-﻿using NCalc;
-using System;
+﻿using System;
 using System.Net.Sockets;
 using System.Text;
 
@@ -15,7 +14,7 @@ namespace Xiropht_Proxy_Solo_Miner
                 {
                     try
                     {
-                        return !(socket.Client.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
+                        return !(socket.Client.Poll(100, SelectMode.SelectRead) && socket.Available == 0);
                     }
                     catch
                     {
@@ -39,14 +38,6 @@ namespace Xiropht_Proxy_Solo_Miner
             }
         }
 
-        public static float Evaluate(string number1, string number2, string operatorMath)
-        {
-            Expression ex = new Expression(number1 + " " + operatorMath + " " + number2);
-
-            var result = ex.Evaluate().ToString();
-            var resultDouble = double.Parse(result);
-            return (float)resultDouble;
-        }
 
         public static string FromHex(string hex)
         {

@@ -38,53 +38,8 @@ namespace Xiropht_Proxy_Solo_Miner
                         TotalConnectedMiner++;
                         ConsoleLog.WriteLine("New miner connected: " + ip);
 
-                        int idAvailable = -1;
                         var cw = new Miner(tcpMiner, ListOfMiners.Count + 1);
-                        if (ListOfMiners.Count > 1)
-                        {
-                            for (int i = 0; i < ListOfMiners.Count; i++)
-                            {
-                                if (i < ListOfMiners.Count)
-                                {
-                                    if (ListOfMiners[i] == null)
-                                    {
-                                        idAvailable = i;
-                                    }
-                                }
-                            }
-                            if (idAvailable != -1)
-                            {
-                                ListOfMiners[idAvailable] = cw;
-                            }
-                            else
-                            {
-                                for (int i = 0; i < ListOfMiners.Count; i++)
-                                {
-                                    if (i < ListOfMiners.Count)
-                                    {
-                                        if (ListOfMiners[i] != null)
-                                        {
-                                            if (!ListOfMiners[i].MinerConnected)
-                                            {
-                                                idAvailable = i;
-                                            }
-                                        }
-                                    }
-                                }
-                                if (idAvailable != -1)
-                                {
-                                    ListOfMiners[idAvailable] = cw;
-                                }
-                                else
-                                {
-                                    ListOfMiners.Add(cw);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            ListOfMiners.Add(cw);
-                        }
+                        ListOfMiners.Add(cw);
 
                         await Task.Factory.StartNew(() => cw.HandleMinerAsync(), CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).ConfigureAwait(false);
 
@@ -116,6 +71,45 @@ namespace Xiropht_Proxy_Solo_Miner
         }
     }
 
+    public class IncommingConnectionObjectPacket : IDisposable
+    {
+        public char[] buffer;
+        public string packet;
+        private bool disposed;
+
+        public IncommingConnectionObjectPacket()
+        {
+            buffer = new char[8192];
+            packet = string.Empty;
+        }
+
+        ~IncommingConnectionObjectPacket()
+        {
+            Dispose(false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        // Protected implementation of Dispose pattern.
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+
+            if (disposing)
+            {
+                buffer = null;
+                packet = null;
+            }
+            disposed = true;
+        }
+    }
+
+
     public class Miner
     {
         /// <summary>
@@ -127,6 +121,7 @@ namespace Xiropht_Proxy_Solo_Miner
         public int MinerDifficulty;
         public int MinerDifficultyPosition;
         public string MinerName;
+        public string MinerVersion;
         public int MinerId;
 
 
@@ -187,8 +182,9 @@ namespace Xiropht_Proxy_Solo_Miner
         public async Task HandleMinerAsync()
         {
             MinerConnected = true;
-            //await Task.Run(() => CheckMinerConnectionAsync()).ConfigureAwait(false);
             await Task.Factory.StartNew(CheckMinerConnectionAsync, CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).ConfigureAwait(false);
+
+            var minerNetworkReader = new StreamReader(new NetworkStream(tcpMiner.Client, true));
 
             while (MinerConnected && NetworkBlockchain.IsConnected)
             {
@@ -198,14 +194,15 @@ namespace Xiropht_Proxy_Solo_Miner
                 }
                 try
                 {
-                    var reader = new StreamReader(new NetworkStream(tcpMiner.Client, true));
-                    var buffer = new char[8192];
 
-                    int received;
-                    while ((received = await reader.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                    using (IncommingConnectionObjectPacket bufferPacket = new IncommingConnectionObjectPacket())
                     {
-                        string packet = new string(buffer, 0, received);
-                        await Task.Run(async () => await HandlePacketMinerAsync(packet)).ConfigureAwait(false);
+                        int received = await minerNetworkReader.ReadAsync(bufferPacket.buffer, 0, bufferPacket.buffer.Length).ConfigureAwait(false);
+                        if (received > 0)
+                        {
+                            bufferPacket.packet = new string(bufferPacket.buffer, 0, received);
+                            await Task.Run(async () => await HandlePacketMinerAsync(bufferPacket.packet)).ConfigureAwait(false);
+                        }
                     }
                 }
                 catch
@@ -262,24 +259,16 @@ namespace Xiropht_Proxy_Solo_Miner
                         MinerName = splitPacket[1];
                         MinerDifficulty = int.Parse(splitPacket[2]);
                         MinerDifficultyPosition = int.Parse(splitPacket[3]);
-                        if (Config.CheckShare)
+                        if (splitPacket.Length > 4)
                         {
-                            if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendLoginAccepted + "|YES"))
-                            {
-                                MinerConnected = false;
-                            }
-
-
-                        }
-                        else
-                        {
-                            if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendLoginAccepted + "|NO"))
-                            {
-                                MinerConnected = false;
-                            }
-
+                            MinerVersion = splitPacket[4];
                         }
 
+                        if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendLoginAccepted + "|NO").ConfigureAwait(false))
+                        {
+                            MinerConnected = false;
+                        }
+                        
                         break;
                     case ClassSoloMiningPacketEnumeration.SoloMiningSendPacketEnumeration.ReceiveAskContentBlockMethod: // Receive ask to know content of selected mining method.
                         string dataMethod = null;
@@ -308,7 +297,7 @@ namespace Xiropht_Proxy_Solo_Miner
                         }
                         if (methodExist)
                         {
-                            if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendContentBlockMethod + "|" + dataMethod))
+                            if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendContentBlockMethod + "|" + dataMethod).ConfigureAwait(false))
                             {
                                 MinerConnected = false;
                             }
@@ -338,7 +327,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                 }
                             }
                         }
-                        if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendListBlockMethod + "|" + dateListMethod))
+                        if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendListBlockMethod + "|" + dateListMethod).ConfigureAwait(false))
                         {
                             MinerConnected = false;
                         }
@@ -349,165 +338,23 @@ namespace Xiropht_Proxy_Solo_Miner
                         break;
                     case ClassSoloMiningPacketEnumeration.SoloMiningSendPacketEnumeration.ReceiveJob:
                         TotalShare++;
-                        if (Config.CheckShare)
+
+                        var encryptedShare = splitPacket[1];
+                        if (NetworkBlockchain.CurrentBlockIndication == Utils.ConvertToSha512(encryptedShare))
                         {
-                            try
+                            TotalGoodShare++;
+                            if (!await NetworkBlockchain.SendPacketAsync(packet, true).ConfigureAwait(false))
                             {
-                                var encryptedShare = splitPacket[1];
-                                var jobTarget = float.Parse(splitPacket[2]);
-                                var calculation = splitPacket[3];
-                                var hashShare = splitPacket[4];
-                                var blockId = splitPacket[5];
-                                if (NetworkBlockchain.CurrentBlockIndication == Utils.ConvertToSha512(encryptedShare))
-                                {
-                                    if (!await NetworkBlockchain.SendPacketAsync(packet, true).ConfigureAwait(false))
-                                    {
-                                        NetworkBlockchain.IsConnected = false;
-                                    }
-                                }
-                                else
-                                {
-
-                                    blockId = blockId.Replace(ClassSoloMiningPacketEnumeration.SoloMiningSendPacketEnumeration.ReceiveJob, "");
-                                    if (blockId == NetworkBlockchain.CurrentBlockId)
-                                    {
-                                        var splitCurrentBlockJob = NetworkBlockchain.CurrentBlockJob.Split(new[] { ";" }, StringSplitOptions.None);
-                                        var minRange = float.Parse(splitCurrentBlockJob[0]);
-                                        var maxRange = float.Parse(splitCurrentBlockJob[1]);
-                                        if (jobTarget >= minRange && jobTarget <= maxRange)
-                                        {
-                                            var splitCalculation = calculation.Split(new[] { " " }, StringSplitOptions.None);
-                                            var calculationCheck = Utils.Evaluate(splitCalculation[0], splitCalculation[2], splitCalculation[1]);
-                                            if (calculationCheck >= minRange && calculationCheck <= maxRange)
-                                            {
-                                                int idMethod = 0;
-                                                if (NetworkBlockchain.ListOfMiningMethodName.Count >= 1)
-                                                {
-                                                    for (int i = 0; i < NetworkBlockchain.ListOfMiningMethodName.Count; i++)
-                                                    {
-                                                        if (i < NetworkBlockchain.ListOfMiningMethodName.Count)
-                                                        {
-                                                            if (NetworkBlockchain.ListOfMiningMethodName[i] == NetworkBlockchain.CurrentBlockMethod)
-                                                            {
-                                                                idMethod = i;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    idMethod = 0;
-                                                }
-                                                var splitMethod = NetworkBlockchain.ListOfMiningMethodContent[idMethod].Split(new[] { "#" }, StringSplitOptions.None);
-
-                                                int roundMethod = int.Parse(splitMethod[0]);
-                                                int roundSize = int.Parse(splitMethod[1]);
-                                                string roundKey = splitMethod[2];
-                                                int keyXorMethod = int.Parse(splitMethod[3]);
-
-                                                string encryptedShareTest = calculation;
-                                                encryptedShareTest = Utils.FromHex(encryptedShareTest + NetworkBlockchain.CurrentBlockTimestampCreate);
-                                                encryptedShareTest = ClassAlgo.GetEncryptedResult(ClassAlgoEnumeration.Xor, encryptedShareTest, "" + keyXorMethod, roundSize, null);
-                                                for (int i = 0; i < roundMethod; i++)
-                                                {
-                                                    encryptedShareTest = ClassAlgo.GetEncryptedResult(NetworkBlockchain.CurrentBlockAlgorithm, encryptedShareTest, NetworkBlockchain.CurrentBlockKey, roundSize, Encoding.ASCII.GetBytes(roundKey));
-
-                                                }
-
-                                                encryptedShareTest = ClassAlgo.GetEncryptedResult(NetworkBlockchain.CurrentBlockAlgorithm, encryptedShareTest, NetworkBlockchain.CurrentBlockKey, roundSize, Encoding.ASCII.GetBytes(roundKey));
-
-                                                encryptedShareTest = Utils.SHA512(encryptedShareTest);
-
-                                                if (encryptedShare == encryptedShareTest)
-                                                {
-                                                    string hashShareTest = Utils.ConvertToSha512(encryptedShareTest);
-                                                    if (hashShare == hashShareTest)
-                                                    {
-                                                        /*  if (!SendPacket(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareGood))
-                                                          {
-                                                              MinerConnected = false;
-                                                          }
-                                                          */
-                                                    }
-                                                    else
-                                                    {
-                                                        Console.WriteLine("Share hash not correct: " + hashShareTest);
-                                                        if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad))
-                                                        {
-                                                            MinerConnected = false;
-                                                        }
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    Console.WriteLine("Share encrypted wrong: " + encryptedShare);
-                                                    if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad))
-                                                    {
-                                                        MinerConnected = false;
-                                                    }
-                                                }
-
-                                            }
-                                            else
-                                            {
-                                                Console.WriteLine("Share calculation wrong: " + calculation);
-
-                                                if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad))
-                                                {
-                                                    MinerConnected = false;
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            Console.WriteLine("Share not between the range of job: " + jobTarget);
-                                            if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad))
-                                            {
-                                                MinerConnected = false;
-                                            }
-                                        }
-                                    }
-                                    else
-                                    {
-                                        Console.WriteLine("Share not target the right block id: " + blockId);
-
-                                        if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad))
-                                        {
-                                            MinerConnected = false;
-                                        }
-                                    }
-                                }
-                            }
-                            catch (Exception error)
-                            {
-                                ConsoleLog.WriteLine("Wrong share syntax from miner name: " + MinerName + " | Exception: " + error.Message);
-                                if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad))
-                                {
-                                    MinerConnected = false;
-                                }
+                                NetworkBlockchain.IsConnected = false;
                             }
                         }
                         else
                         {
-                            var encryptedShare = splitPacket[1];
-                            if (NetworkBlockchain.CurrentBlockIndication == Utils.ConvertToSha512(encryptedShare))
+                            TotalInvalidShare++;
+                            if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad).ConfigureAwait(false))
                             {
-                                TotalGoodShare++;
-                                if (!await NetworkBlockchain.SendPacketAsync(packet, true).ConfigureAwait(false))
-                                {
-                                    NetworkBlockchain.IsConnected = false;
-                                }
+                                MinerConnected = false;
                             }
-                            else
-                            {
-                                Console.WriteLine("Share md5 wrong: " + encryptedShare);
-                                TotalInvalidShare++;
-                                if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad).ConfigureAwait(false))
-                                {
-                                    MinerConnected = false;
-                                }
-                            }
-
                         }
                         break;
                 }

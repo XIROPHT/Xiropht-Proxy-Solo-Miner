@@ -73,34 +73,10 @@ namespace Xiropht_Proxy_Solo_Miner
             {
                 while(true)
                 {
-                    Thread.Sleep(100);
+                    Thread.Sleep(1000);
                     if (!IsConnected || !classSeedNodeConnector.GetStatusConnectToSeed())
                     {
-                        NetworkProxy.StopProxy();
                         IsConnected = false;
-                        if (NetworkProxy.ListOfMiners != null)
-                        {
-                            if (NetworkProxy.ListOfMiners.Count > 0)
-                            {
-                                Console.WriteLine("Connection lost, disconnect all miners: ");
-                                for (int i = 0; i < NetworkProxy.ListOfMiners.Count; i++)
-                                {
-                                    if (i < NetworkProxy.ListOfMiners.Count)
-                                    {
-                                        try
-                                        {
-                                            NetworkProxy.ListOfMiners[i].DisconnectMiner();
-                                        }
-                                        catch
-                                        {
-
-                                        }
-
-                                    }
-                                }
-                            }
-                            NetworkProxy.ListOfMiners.Clear();
-                        }
                         LoginAccepted = false;
                         while (!await ConnectToBlockchainAsync())
                         {
@@ -159,7 +135,7 @@ namespace Xiropht_Proxy_Solo_Miner
                 {
                     try
                     {
-                        string packet = await classSeedNodeConnector.ReceivePacketFromSeedNodeAsync(Program.NetworkCertificate, false, true).ConfigureAwait(false);
+                        string packet = await classSeedNodeConnector.ReceivePacketFromSeedNodeAsync(Program.NetworkCertificate, false, true);
                         if (packet == ClassSeedNodeStatus.SeedError)
                         {
                             ConsoleLog.WriteLine("Connection to network lost, reconnect in 5 seconds..");
@@ -397,7 +373,7 @@ namespace Xiropht_Proxy_Solo_Miner
             var splitBlockContent = Blocktemplate.Split(new[] { "&" }, StringSplitOptions.None);
 
             
-                CurrentBlockId = splitBlockContent[0].Replace("ID=", "");
+            CurrentBlockId = splitBlockContent[0].Replace("ID=", "");
             if (CurrentBlockId != "" && CurrentBlockId.Length > 0)
             { 
                 CurrentBlockHash = splitBlockContent[1].Replace("HASH=", "");

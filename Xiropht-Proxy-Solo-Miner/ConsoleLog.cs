@@ -10,7 +10,7 @@ namespace Xiropht_Proxy_Solo_Miner
 
         public static void InitializeLog()
         {
-            WriterLog = new StreamWriter(Program.GetCurrentPath() + Program.ConvertPath("\\proxy_log.log"));
+            WriterLog = new StreamWriter(Program.ConvertPath(Directory.GetCurrentDirectory() + "\\proxy_log.log"));
             WriterLog.AutoFlush = true;
         }
 
