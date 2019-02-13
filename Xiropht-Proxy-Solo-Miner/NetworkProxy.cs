@@ -26,6 +26,11 @@ namespace Xiropht_Proxy_Solo_Miner
 
             ProxyStarted = true;
 
+            if (ThreadProxyListen != null && (ThreadProxyListen.IsAlive || ThreadProxyListen != null))
+            {
+                ThreadProxyListen.Abort();
+                GC.SuppressFinalize(ThreadProxyListen);
+            }
             ThreadProxyListen = new Thread(async delegate ()
             {
                 while (NetworkBlockchain.IsConnected && ProxyStarted)
@@ -48,6 +53,7 @@ namespace Xiropht_Proxy_Solo_Miner
                     {
                     }
                 }
+                ProxyStarted = false;
             });
             ThreadProxyListen.Start();
         }

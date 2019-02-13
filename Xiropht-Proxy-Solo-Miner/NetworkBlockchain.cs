@@ -47,6 +47,7 @@ namespace Xiropht_Proxy_Solo_Miner
         {
 
             classSeedNodeConnector?.DisconnectToSeed();
+            classSeedNodeConnector = null;
             classSeedNodeConnector = new ClassSeedNodeConnector();
 
 
@@ -74,10 +75,21 @@ namespace Xiropht_Proxy_Solo_Miner
                 while(true)
                 {
                     Thread.Sleep(1000);
-                    if (!IsConnected || !classSeedNodeConnector.GetStatusConnectToSeed())
+                    if (!IsConnected || !classSeedNodeConnector.ReturnStatus())
                     {
+                        if (ThreadListenBlockchain != null && (ThreadListenBlockchain.IsAlive || ThreadListenBlockchain != null))
+                        {
+                            ThreadListenBlockchain.Abort();
+                            GC.SuppressFinalize(ThreadListenBlockchain);
+                        }
+                        if (ThreadAskMiningMethod != null && (ThreadAskMiningMethod.IsAlive || ThreadAskMiningMethod != null))
+                        {
+                            ThreadAskMiningMethod.Abort();
+                            GC.SuppressFinalize(ThreadAskMiningMethod);
+                        }
                         IsConnected = false;
                         LoginAccepted = false;
+                        NetworkProxy.StopProxy();
                         while (!await ConnectToBlockchainAsync())
                         {
                             ConsoleLog.WriteLine("Can't connect to the network, retry in 5 seconds..");
@@ -211,8 +223,12 @@ namespace Xiropht_Proxy_Solo_Miner
             {
                 case ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendLoginAccepted:
                     LoginAccepted = true;
+                    IsConnected = true;
                     ConsoleLog.WriteLine("Proxy login accepted, ask mining methods.");
-                    NetworkProxy.StartProxy();
+                    if (!NetworkProxy.ProxyStarted)
+                    {
+                        NetworkProxy.StartProxy();
+                    }
                     AskMiningMethod();
                     break;
                 case ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendListBlockMethod:
