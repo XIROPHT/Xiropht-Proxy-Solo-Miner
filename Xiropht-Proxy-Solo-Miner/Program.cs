@@ -87,7 +87,8 @@ namespace Xiropht_Proxy_Solo_Miner
                 Console.WriteLine("Select a port to bind: ");
                 Config.ProxyPort = int.Parse(Console.ReadLine());
                 Console.WriteLine("Do you want enable log system ? [Y/N]: ");
-                if (Console.ReadLine() == "Y" || Console.ReadLine() == "y")
+                string choose = Console.ReadLine();
+                if (choose == "Y" || choose == "y")
                 {
                     Config.WriteLog = true;
                 }
