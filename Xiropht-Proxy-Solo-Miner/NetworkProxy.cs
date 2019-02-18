@@ -131,13 +131,6 @@ namespace Xiropht_Proxy_Solo_Miner
         public int MinerId;
 
 
-        /// <summary>
-        /// Miner stats.
-        /// </summary>
-        public int TotalGoodShare;
-        public int TotalInvalidShare;
-        public int TotalShare;
-
         public Miner(TcpClient tcpClient, int id)
         {
             tcpMiner = tcpClient;
@@ -233,6 +226,10 @@ namespace Xiropht_Proxy_Solo_Miner
         /// <param name="tcpMiner"></param>
         public void DisconnectMiner()
         {
+            if (NetworkBlockchain.ListMinerStats.ContainsKey(MinerName))
+            {
+                NetworkBlockchain.ListMinerStats[MinerName].MinerConnectionStatus = false;
+            }
             if (MinerInitialized)
             {
                 if (NetworkProxy.TotalConnectedMiner > 0)
@@ -263,13 +260,22 @@ namespace Xiropht_Proxy_Solo_Miner
                 {
                     case "MINER": // For Login.
                         MinerName = splitPacket[1];
+
                         MinerDifficulty = int.Parse(splitPacket[2]);
                         MinerDifficultyPosition = int.Parse(splitPacket[3]);
                         if (splitPacket.Length > 4)
                         {
                             MinerVersion = splitPacket[4];
                         }
-
+                        if (NetworkBlockchain.ListMinerStats.ContainsKey(MinerName))
+                        {
+                            NetworkBlockchain.ListMinerStats[MinerName].MinerConnectionStatus = true;
+                            NetworkBlockchain.ListMinerStats[MinerName].MinerVersion = MinerVersion;
+                        }
+                        else
+                        {
+                            NetworkBlockchain.ListMinerStats.Add(MinerName, new ClassMinerStats() { MinerConnectionStatus = true, MinerTotalGoodShare = 0, MinerVersion = MinerVersion });
+                        }
                         if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendLoginAccepted + "|NO").ConfigureAwait(false))
                         {
                             MinerConnected = false;
@@ -343,12 +349,12 @@ namespace Xiropht_Proxy_Solo_Miner
                         await NetworkBlockchain.SpreadJobAsync();
                         break;
                     case ClassSoloMiningPacketEnumeration.SoloMiningSendPacketEnumeration.ReceiveJob:
-                        TotalShare++;
+                        NetworkBlockchain.ListMinerStats[MinerName].MinerTotalShare++;
 
                         var encryptedShare = splitPacket[1];
                         if (NetworkBlockchain.CurrentBlockIndication == Utils.ConvertToSha512(encryptedShare))
                         {
-                            TotalGoodShare++;
+                            NetworkBlockchain.ListMinerStats[MinerName].MinerTotalGoodShare++;
                             if (!await NetworkBlockchain.SendPacketAsync(packet, true).ConfigureAwait(false))
                             {
                                 NetworkBlockchain.IsConnected = false;
@@ -356,7 +362,7 @@ namespace Xiropht_Proxy_Solo_Miner
                         }
                         else
                         {
-                            TotalInvalidShare++;
+                            NetworkBlockchain.ListMinerStats[MinerName].MinerTotalInvalidShare++;
                             if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad).ConfigureAwait(false))
                             {
                                 MinerConnected = false;

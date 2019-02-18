@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using Xiropht_Connector_All.Utils;
 
@@ -190,65 +191,67 @@ namespace Xiropht_Proxy_Solo_Miner
             {
                 while (true)
                 {
-                    var command = Console.ReadLine().Split(new[] { " " }, StringSplitOptions.None);
 
+                    StringBuilder input = new StringBuilder();
+                    var key = Console.ReadKey(true);
+                    input.Append(key.KeyChar);
+                    CommandLine(input.ToString());
+                    input.Clear();
+                }
+            }).Start();
+        }
 
-                    switch (command[0])
+        private static void CommandLine(string command)
+        {
+            switch (command)
+            {
+                case "h":
+                    ConsoleLog.WriteLine("h - Show command list.");
+                    ConsoleLog.WriteLine("s - Show proxy stats with miners stats.");
+                    break;
+                case "s":
+                    ConsoleLog.WriteLine(">> Invalid share can mean you have get orphaned block <<");
+                    ConsoleLog.WriteLine("Total block unlock: " + NetworkBlockchain.TotalBlockUnlocked);
+                    ConsoleLog.WriteLine("Total block bad unlock: " + NetworkBlockchain.TotalBlockWrong);
+                    if (NetworkBlockchain.IsConnected)
                     {
-                        case "h":
-                            ConsoleLog.WriteLine("h - Show command list.");
-                            ConsoleLog.WriteLine("s - Show proxy stats with miners stats.");
-                            break;
-                        case "s":
-                            ConsoleLog.WriteLine(">> Invalid share can mean you have get orphaned block <<");
-                            ConsoleLog.WriteLine("Total block unlock: " + NetworkBlockchain.TotalBlockUnlocked);
-                            ConsoleLog.WriteLine("Total block bad unlock: " + NetworkBlockchain.TotalBlockWrong);
-                            if (NetworkBlockchain.IsConnected)
+                        ConsoleLog.WriteLine("Network proxy connection to the network status: Connected.");
+                    }
+                    else
+                    {
+                        ConsoleLog.WriteLine("Network proxy connection to the network status: Disconnected.");
+                    }
+                    int totalMinerConnected = 0;
+
+                    if (NetworkBlockchain.ListMinerStats.Count > 0)
+                    {
+                        foreach (var minerStats in NetworkBlockchain.ListMinerStats)
+                        {
+                            ConsoleLog.WriteLine("Miner name: " + minerStats.Key);
+                            if (minerStats.Value.MinerConnectionStatus)
                             {
-                                ConsoleLog.WriteLine("Network proxy connection to the network status: Connected.");
+                                ConsoleLog.WriteLine("Miner status: Connected.");
+                                totalMinerConnected++;
                             }
                             else
                             {
-                                ConsoleLog.WriteLine("Network proxy connection to the network status: Disconnected.");
+                                ConsoleLog.WriteLine("Miner status: Disconnected.");
                             }
-                            int totalMinerConnected = 0;
-                            if (NetworkProxy.ListOfMiners.Count > 0)
+                            ConsoleLog.WriteLine("Miner total share: " + minerStats.Value.MinerTotalShare);
+                            ConsoleLog.WriteLine("Miner total good share: " + minerStats.Value.MinerTotalGoodShare);
+                            ConsoleLog.WriteLine("Miner total invalid share: " + minerStats.Value.MinerTotalInvalidShare);
+                            string version = minerStats.Value.MinerVersion;
+                            if (string.IsNullOrEmpty(version))
                             {
-
-                                for (int i = 0; i < NetworkProxy.ListOfMiners.Count; i++)
-                                {
-                                    if (i < NetworkProxy.ListOfMiners.Count)
-                                    {
-                                        ConsoleLog.WriteLine("Miner ID: " + i);
-                                        ConsoleLog.WriteLine("Miner name: " + NetworkProxy.ListOfMiners[i].MinerName);
-                                        if (NetworkProxy.ListOfMiners[i].MinerConnected)
-                                        {
-                                            ConsoleLog.WriteLine("Miner status: Connected.");
-                                            totalMinerConnected++;
-                                        }
-                                        else
-                                        {
-                                            ConsoleLog.WriteLine("Miner status: Disconnected.");
-                                        }
-                                        ConsoleLog.WriteLine("Miner total share: " + NetworkProxy.ListOfMiners[i].TotalShare);
-                                        ConsoleLog.WriteLine("Miner total good share: " + NetworkProxy.ListOfMiners[i].TotalGoodShare);
-                                        ConsoleLog.WriteLine("Miner total invalid share: " + NetworkProxy.ListOfMiners[i].TotalInvalidShare);
-                                        string version = NetworkProxy.ListOfMiners[i].MinerVersion;
-                                        if (string.IsNullOrEmpty(version))
-                                        {
-                                            version = "Unknown";
-                                        }
-                                        ConsoleLog.WriteLine("Miner version: " + version);
-
-                                    }
-                                }
+                                version = "Unknown";
                             }
-                            ConsoleLog.WriteLine("Total miners connected: " + totalMinerConnected);
-
-                            break;
+                            ConsoleLog.WriteLine("Miner version: " + version);
+                        }
                     }
-                }
-            }).Start();
+                    ConsoleLog.WriteLine("Total miners connected: " + totalMinerConnected);
+
+                    break;
+            }
         }
     }
 }

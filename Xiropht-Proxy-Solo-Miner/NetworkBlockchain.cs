@@ -9,6 +9,15 @@ using Xiropht_Connector_All.Utils;
 
 namespace Xiropht_Proxy_Solo_Miner
 {
+    public class ClassMinerStats
+    {
+        public bool MinerConnectionStatus;
+        public int MinerTotalGoodShare;
+        public int MinerTotalShare;
+        public string MinerVersion;
+        public int MinerTotalInvalidShare;
+    }
+
     public class NetworkBlockchain
     {
         private static ClassSeedNodeConnector classSeedNodeConnector;
@@ -38,6 +47,11 @@ namespace Xiropht_Proxy_Solo_Miner
         public static string CurrentBlockIndication;
         public static bool FirstStart;
         public static bool LoginAccepted;
+
+        /// <summary>
+        /// List of Miner stats.
+        /// </summary>
+        public static Dictionary<string, ClassMinerStats> ListMinerStats = new Dictionary<string, ClassMinerStats>();
 
         /// <summary>
         /// Connect to the network of blockchain.
