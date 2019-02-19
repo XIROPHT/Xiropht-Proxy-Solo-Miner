@@ -1,6 +1,8 @@
 # Xiropht-Proxy-Solo-Miner
 Xiropht Proxy Solo Miner is usefull for share different part of the current block to other miners.
 
+Netframework 4.6.1 minimum is required or Mono for Linux OS.
+
 **In production, we suggest to compile in Release Mode for disable log files.**
 
 **Compatibility:** Windows (Visual Studio), Linux (Mono), Android (with Xamarin or Mono), MacOSX (with Xamarin or Mono)
