@@ -241,9 +241,11 @@ namespace Xiropht_Proxy_Solo_Miner
             MinerInitialized = false;
             tcpMiner?.Close();
             tcpMiner?.Dispose();
-            MinerDifficultyPosition = 0;
-            MinerDifficulty = 0;
-            Task.Run(async () => await NetworkBlockchain.SpreadJobAsync());
+
+            if(MinerDifficultyPosition == 0 && MinerDifficulty == 0)
+            {
+                new Task(async () => await NetworkBlockchain.SpreadJobAsync()).Start();
+            }
         }
 
         /// <summary>
@@ -260,7 +262,6 @@ namespace Xiropht_Proxy_Solo_Miner
                 {
                     case "MINER": // For Login.
                         MinerName = splitPacket[1];
-
                         MinerDifficulty = int.Parse(splitPacket[2]);
                         MinerDifficultyPosition = int.Parse(splitPacket[3]);
                         if (splitPacket.Length > 4)
@@ -346,7 +347,7 @@ namespace Xiropht_Proxy_Solo_Miner
                         break;
                     case ClassSoloMiningPacketEnumeration.SoloMiningSendPacketEnumeration.ReceiveAskCurrentBlockMining:
                         MinerInitialized = true;
-                        await NetworkBlockchain.SpreadJobAsync();
+                        await NetworkBlockchain.SpreadJobAsync(MinerId);
                         break;
                     case ClassSoloMiningPacketEnumeration.SoloMiningSendPacketEnumeration.ReceiveJob:
                         NetworkBlockchain.ListMinerStats[MinerName].MinerTotalShare++;
