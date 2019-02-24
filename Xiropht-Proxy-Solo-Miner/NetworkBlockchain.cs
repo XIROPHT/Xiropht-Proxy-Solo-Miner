@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Xiropht_Connector_All.Seed;
@@ -400,50 +402,31 @@ namespace Xiropht_Proxy_Solo_Miner
 
         public static async Task SpreadJobAsync(int minerId = -1)
         {
-            var splitBlockContent = Blocktemplate.Split(new[] { "&" }, StringSplitOptions.None);
+            try
+            {
+                var splitBlockContent = Blocktemplate.Split(new[] { "&" }, StringSplitOptions.None);
 
-            
-            CurrentBlockId = splitBlockContent[0].Replace("ID=", "");
-            if (CurrentBlockId != "" && CurrentBlockId.Length > 0)
-            { 
-                CurrentBlockHash = splitBlockContent[1].Replace("HASH=", "");
-                CurrentBlockAlgorithm = splitBlockContent[2].Replace("ALGORITHM=", "");
-                CurrentBlockSize = splitBlockContent[3].Replace("SIZE=", "");
-                CurrentBlockMethod = splitBlockContent[4].Replace("METHOD=", "");
-                CurrentBlockKey = splitBlockContent[5].Replace("KEY=", "");
-                CurrentBlockJob = splitBlockContent[6].Replace("JOB=", "");
-                CurrentBlockReward = splitBlockContent[7].Replace("REWARD=", "");
-                CurrentBlockDifficulty = splitBlockContent[8].Replace("DIFFICULTY=", "");
-                CurrentBlockTimestampCreate = splitBlockContent[9].Replace("TIMESTAMP=", "");
-                CurrentBlockIndication = splitBlockContent[10].Replace("INDICATION=", "");
-
-                var splitCurrentBlockJob = CurrentBlockJob.Split(new[] { ";" }, StringSplitOptions.None);
-                var minRange = float.Parse(splitCurrentBlockJob[0]);
-                var maxRange = float.Parse(splitCurrentBlockJob[1]);
-
-                if (NetworkProxy.ListOfMiners != null)
+                CurrentBlockId = splitBlockContent[0].Replace("ID=", "");
+                if (CurrentBlockId != "" && CurrentBlockId.Length > 0)
                 {
-                    int totalMinerConnected = 0;
-                    for (int i = 0; i < NetworkProxy.ListOfMiners.Count; i++)
-                    {
-                        if (i < NetworkProxy.ListOfMiners.Count)
-                        {
-                            if (NetworkProxy.ListOfMiners[i] != null)
-                            {
-                                if (NetworkProxy.ListOfMiners[i].MinerConnected)
-                                {
-                                    if (NetworkProxy.ListOfMiners[i].MinerInitialized)
-                                    {
-                                        totalMinerConnected++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    int i1 = 0;
+                    CurrentBlockHash = splitBlockContent[1].Replace("HASH=", "");
+                    CurrentBlockAlgorithm = splitBlockContent[2].Replace("ALGORITHM=", "");
+                    CurrentBlockSize = splitBlockContent[3].Replace("SIZE=", "");
+                    CurrentBlockMethod = splitBlockContent[4].Replace("METHOD=", "");
+                    CurrentBlockKey = splitBlockContent[5].Replace("KEY=", "");
+                    CurrentBlockJob = splitBlockContent[6].Replace("JOB=", "");
+                    CurrentBlockReward = splitBlockContent[7].Replace("REWARD=", "");
+                    CurrentBlockDifficulty = splitBlockContent[8].Replace("DIFFICULTY=", "");
+                    CurrentBlockTimestampCreate = splitBlockContent[9].Replace("TIMESTAMP=", "");
+                    CurrentBlockIndication = splitBlockContent[10].Replace("INDICATION=", "");
 
-                    if (minerId != -1)
+                    var splitCurrentBlockJob = CurrentBlockJob.Split(new[] { ";" }, StringSplitOptions.None);
+                    var minRange = float.Parse(splitCurrentBlockJob[0]);
+                    var maxRange = float.Parse(splitCurrentBlockJob[1]);
+
+                    if (NetworkProxy.ListOfMiners != null)
                     {
+                        int totalMinerConnected = 0;
                         for (int i = 0; i < NetworkProxy.ListOfMiners.Count; i++)
                         {
                             if (i < NetworkProxy.ListOfMiners.Count)
@@ -454,16 +437,135 @@ namespace Xiropht_Proxy_Solo_Miner
                                     {
                                         if (NetworkProxy.ListOfMiners[i].MinerInitialized)
                                         {
-                                            if (NetworkProxy.ListOfMiners[i].MinerDifficultyPosition == 0 && NetworkProxy.ListOfMiners[i].MinerDifficulty == 0)
+                                            totalMinerConnected++;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        int i1 = 0;
+
+                        if (minerId != -1)
+                        {
+                            for (int i = 0; i < NetworkProxy.ListOfMiners.Count; i++)
+                            {
+                                if (i < NetworkProxy.ListOfMiners.Count)
+                                {
+                                    if (NetworkProxy.ListOfMiners[i] != null)
+                                    {
+                                        if (NetworkProxy.ListOfMiners[i].MinerConnected)
+                                        {
+                                            if (NetworkProxy.ListOfMiners[i].MinerInitialized)
                                             {
-                                                i1++;
-
-
-                                                if (NetworkProxy.ListOfMiners[i].MinerId == minerId)
+                                                if (NetworkProxy.ListOfMiners[i].MinerDifficultyPosition == 0 && NetworkProxy.ListOfMiners[i].MinerDifficulty == 0)
                                                 {
+                                                    i1++;
+
+
+                                                    if (NetworkProxy.ListOfMiners[i].MinerId == minerId)
+                                                    {
+                                                        var minRangeTmp = (float)Math.Round((maxRange / totalMinerConnected) * (i1 - 1), 0);
+                                                        var maxRangeTmp = (float)(Math.Round(((maxRange / totalMinerConnected) * i1), 0));
+
+
+                                                        var blocktemplateTmp = "ID=" + CurrentBlockId + "&HASH=" + CurrentBlockHash + "&ALGORITHM=" + CurrentBlockAlgorithm + "&SIZE=" + CurrentBlockSize + "&METHOD=" + CurrentBlockMethod + "&KEY=" + CurrentBlockKey + "&JOB=" + minRangeTmp + ";" + maxRangeTmp + "&REWARD=" + CurrentBlockReward + "&DIFFICULTY=" + CurrentBlockDifficulty + "&TIMESTAMP=" + CurrentBlockTimestampCreate + "&INDICATION=" + CurrentBlockIndication + "&PROXY=YES";
+
+                                                        Console.WriteLine("Send job: " + minRangeTmp + "/" + maxRangeTmp + " range to miner: " + NetworkProxy.ListOfMiners[i].MinerName);
+                                                        if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendCurrentBlockMining + "|" + blocktemplateTmp).ConfigureAwait(false))
+                                                        {
+                                                            NetworkProxy.ListOfMiners[i].MinerInitialized = false;
+                                                            NetworkProxy.ListOfMiners[i].MinerConnected = false;
+                                                            try
+                                                            {
+                                                                NetworkProxy.ListOfMiners[i].DisconnectMiner();
+                                                            }
+                                                            catch
+                                                            {
+
+                                                            }
+                                                            NetworkProxy.ListOfMiners[i] = null;
+                                                        }
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    if (NetworkProxy.ListOfMiners[i].MinerId == minerId)
+                                                    {
+                                                        Console.WriteLine(NetworkProxy.ListOfMiners[i].MinerName + " select position range: " + NetworkProxy.ListOfMiners[i].MinerDifficultyPosition);
+                                                        Console.WriteLine(NetworkProxy.ListOfMiners[i].MinerName + " select pourcentage range: " + NetworkProxy.ListOfMiners[i].MinerDifficulty);
+                                                        var minerJobRangePosition = NetworkProxy.ListOfMiners[i].MinerDifficultyPosition;
+                                                        var minerJobRangePourcentage = NetworkProxy.ListOfMiners[i].MinerDifficulty;
+
+                                                        if (minerJobRangePourcentage <= 0)
+                                                        {
+                                                            minerJobRangePourcentage = 100;
+                                                        }
+                                                        if (minerJobRangePosition > 100)
+                                                        {
+                                                            minerJobRangePosition = 100;
+                                                        }
+
+
+                                                        var minerJobRangePositionStart = (maxRange * minerJobRangePosition) / 100;
+                                                        var minerJobRangePositionEnd = (maxRange * minerJobRangePourcentage) / 100;
+                                                        if (minerJobRangePositionEnd <= minerJobRangePositionStart)
+                                                        {
+                                                            minerJobRangePositionEnd = minerJobRangePositionEnd + minerJobRangePositionStart;
+                                                        }
+                                                        var minRangeTmp = (float)Math.Round(minerJobRangePositionStart, 0);
+                                                        var maxRangeTmp = (float)Math.Round(minerJobRangePositionEnd, 0);
+
+                                                        if (minRangeTmp <= 0)
+                                                        {
+                                                            minRangeTmp = 1;
+                                                        }
+
+
+                                                        var blocktemplateTmp = "ID=" + CurrentBlockId + "&HASH=" + CurrentBlockHash + "&ALGORITHM=" + CurrentBlockAlgorithm + "&SIZE=" + CurrentBlockSize + "&METHOD=" + CurrentBlockMethod + "&KEY=" + CurrentBlockKey + "&JOB=" + minRangeTmp + ";" + maxRangeTmp + "&REWARD=" + CurrentBlockReward + "&DIFFICULTY=" + CurrentBlockDifficulty + "&TIMESTAMP=" + CurrentBlockTimestampCreate + "&INDICATION=" + CurrentBlockIndication + "&PROXY=YES";
+
+                                                        Console.WriteLine("Send job: " + minRangeTmp + "/" + maxRangeTmp + " range to miner: " + NetworkProxy.ListOfMiners[i].MinerName);
+                                                        if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendCurrentBlockMining + "|" + blocktemplateTmp).ConfigureAwait(false))
+                                                        {
+                                                            NetworkProxy.ListOfMiners[i].MinerInitialized = false;
+                                                            NetworkProxy.ListOfMiners[i].MinerConnected = false;
+                                                            try
+                                                            {
+                                                                NetworkProxy.ListOfMiners[i].DisconnectMiner();
+                                                            }
+                                                            catch
+                                                            {
+
+                                                            }
+                                                            NetworkProxy.ListOfMiners[i] = null;
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 0; i < NetworkProxy.ListOfMiners.Count; i++)
+                            {
+                                if (i < NetworkProxy.ListOfMiners.Count)
+                                {
+                                    if (NetworkProxy.ListOfMiners[i] != null)
+                                    {
+                                        if (NetworkProxy.ListOfMiners[i].MinerConnected)
+                                        {
+                                            if (NetworkProxy.ListOfMiners[i].MinerInitialized)
+                                            {
+                                                if (NetworkProxy.ListOfMiners[i].MinerDifficultyPosition == 0 && NetworkProxy.ListOfMiners[i].MinerDifficulty == 0)
+                                                {
+                                                    i1++;
+
+
                                                     var minRangeTmp = (float)Math.Round((maxRange / totalMinerConnected) * (i1 - 1), 0);
                                                     var maxRangeTmp = (float)(Math.Round(((maxRange / totalMinerConnected) * i1), 0));
-
 
                                                     var blocktemplateTmp = "ID=" + CurrentBlockId + "&HASH=" + CurrentBlockHash + "&ALGORITHM=" + CurrentBlockAlgorithm + "&SIZE=" + CurrentBlockSize + "&METHOD=" + CurrentBlockMethod + "&KEY=" + CurrentBlockKey + "&JOB=" + minRangeTmp + ";" + maxRangeTmp + "&REWARD=" + CurrentBlockReward + "&DIFFICULTY=" + CurrentBlockDifficulty + "&TIMESTAMP=" + CurrentBlockTimestampCreate + "&INDICATION=" + CurrentBlockIndication + "&PROXY=YES";
 
@@ -483,10 +585,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                                         NetworkProxy.ListOfMiners[i] = null;
                                                     }
                                                 }
-                                            }
-                                            else
-                                            {
-                                                if (NetworkProxy.ListOfMiners[i].MinerId == minerId)
+                                                else
                                                 {
                                                     Console.WriteLine(NetworkProxy.ListOfMiners[i].MinerName + " select position range: " + NetworkProxy.ListOfMiners[i].MinerDifficultyPosition);
                                                     Console.WriteLine(NetworkProxy.ListOfMiners[i].MinerName + " select pourcentage range: " + NetworkProxy.ListOfMiners[i].MinerDifficulty);
@@ -537,109 +636,18 @@ namespace Xiropht_Proxy_Solo_Miner
                                                     }
                                                 }
                                             }
+
                                         }
-
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        for (int i = 0; i < NetworkProxy.ListOfMiners.Count; i++)
-                        {
-                            if (i < NetworkProxy.ListOfMiners.Count)
-                            {
-                                if (NetworkProxy.ListOfMiners[i] != null)
-                                {
-                                    if (NetworkProxy.ListOfMiners[i].MinerConnected)
-                                    {
-                                        if (NetworkProxy.ListOfMiners[i].MinerInitialized)
-                                        {
-                                            if (NetworkProxy.ListOfMiners[i].MinerDifficultyPosition == 0 && NetworkProxy.ListOfMiners[i].MinerDifficulty == 0)
-                                            {
-                                                i1++;
-
-
-                                                var minRangeTmp = (float)Math.Round((maxRange / totalMinerConnected) * (i1 - 1), 0);
-                                                var maxRangeTmp = (float)(Math.Round(((maxRange / totalMinerConnected) * i1), 0));
-
-                                                var blocktemplateTmp = "ID=" + CurrentBlockId + "&HASH=" + CurrentBlockHash + "&ALGORITHM=" + CurrentBlockAlgorithm + "&SIZE=" + CurrentBlockSize + "&METHOD=" + CurrentBlockMethod + "&KEY=" + CurrentBlockKey + "&JOB=" + minRangeTmp + ";" + maxRangeTmp + "&REWARD=" + CurrentBlockReward + "&DIFFICULTY=" + CurrentBlockDifficulty + "&TIMESTAMP=" + CurrentBlockTimestampCreate + "&INDICATION=" + CurrentBlockIndication + "&PROXY=YES";
-
-                                                Console.WriteLine("Send job: " + minRangeTmp + "/" + maxRangeTmp + " range to miner: " + NetworkProxy.ListOfMiners[i].MinerName);
-                                                if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendCurrentBlockMining + "|" + blocktemplateTmp).ConfigureAwait(false))
-                                                {
-                                                    NetworkProxy.ListOfMiners[i].MinerInitialized = false;
-                                                    NetworkProxy.ListOfMiners[i].MinerConnected = false;
-                                                    try
-                                                    {
-                                                        NetworkProxy.ListOfMiners[i].DisconnectMiner();
-                                                    }
-                                                    catch
-                                                    {
-
-                                                    }
-                                                    NetworkProxy.ListOfMiners[i] = null;
-                                                }
-                                            }
-                                            else
-                                            {
-                                                Console.WriteLine(NetworkProxy.ListOfMiners[i].MinerName + " select position range: " + NetworkProxy.ListOfMiners[i].MinerDifficultyPosition);
-                                                Console.WriteLine(NetworkProxy.ListOfMiners[i].MinerName + " select pourcentage range: " + NetworkProxy.ListOfMiners[i].MinerDifficulty);
-                                                var minerJobRangePosition = NetworkProxy.ListOfMiners[i].MinerDifficultyPosition;
-                                                var minerJobRangePourcentage = NetworkProxy.ListOfMiners[i].MinerDifficulty;
-
-                                                if (minerJobRangePourcentage <= 0)
-                                                {
-                                                    minerJobRangePourcentage = 100;
-                                                }
-                                                if (minerJobRangePosition > 100)
-                                                {
-                                                    minerJobRangePosition = 100;
-                                                }
-
-
-                                                var minerJobRangePositionStart = (maxRange * minerJobRangePosition) / 100;
-                                                var minerJobRangePositionEnd = (maxRange * minerJobRangePourcentage) / 100;
-                                                if (minerJobRangePositionEnd <= minerJobRangePositionStart)
-                                                {
-                                                    minerJobRangePositionEnd = minerJobRangePositionEnd + minerJobRangePositionStart;
-                                                }
-                                                var minRangeTmp = (float)Math.Round(minerJobRangePositionStart, 0);
-                                                var maxRangeTmp = (float)Math.Round(minerJobRangePositionEnd, 0);
-
-                                                if (minRangeTmp <= 0)
-                                                {
-                                                    minRangeTmp = 1;
-                                                }
-
-
-                                                var blocktemplateTmp = "ID=" + CurrentBlockId + "&HASH=" + CurrentBlockHash + "&ALGORITHM=" + CurrentBlockAlgorithm + "&SIZE=" + CurrentBlockSize + "&METHOD=" + CurrentBlockMethod + "&KEY=" + CurrentBlockKey + "&JOB=" + minRangeTmp + ";" + maxRangeTmp + "&REWARD=" + CurrentBlockReward + "&DIFFICULTY=" + CurrentBlockDifficulty + "&TIMESTAMP=" + CurrentBlockTimestampCreate + "&INDICATION=" + CurrentBlockIndication + "&PROXY=YES";
-
-                                                Console.WriteLine("Send job: " + minRangeTmp + "/" + maxRangeTmp + " range to miner: " + NetworkProxy.ListOfMiners[i].MinerName);
-                                                if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendCurrentBlockMining + "|" + blocktemplateTmp).ConfigureAwait(false))
-                                                {
-                                                    NetworkProxy.ListOfMiners[i].MinerInitialized = false;
-                                                    NetworkProxy.ListOfMiners[i].MinerConnected = false;
-                                                    try
-                                                    {
-                                                        NetworkProxy.ListOfMiners[i].DisconnectMiner();
-                                                    }
-                                                    catch
-                                                    {
-
-                                                    }
-                                                    NetworkProxy.ListOfMiners[i] = null;
-                                                }
-                                            }
-                                        }
-
                                     }
                                 }
                             }
                         }
                     }
                 }
+            }
+            catch(Exception error)
+            {
+                FastWriteExceptionError(error);
             }
         }
 
@@ -700,6 +708,27 @@ namespace Xiropht_Proxy_Solo_Miner
                 }
             }
             return true;
+        }
+
+        /// <summary>
+        /// Saved fast exception error.
+        /// </summary>
+        /// <param name="error"></param>
+        public static void FastWriteExceptionError(Exception error)
+        {
+            var filePath = Program.ConvertPath(Directory.GetCurrentDirectory() + "\\fast_error_proxy_miner.txt");
+            var exception = error;
+            using (var writer = new StreamWriter(filePath) { AutoFlush = true })
+            {
+                writer.WriteLine("Message :" + exception.Message + "<br/>" + Environment.NewLine +
+                                 "StackTrace :" +
+                                 exception.StackTrace +
+                                 "" + Environment.NewLine + "Date :" + DateTime.Now);
+                writer.WriteLine(Environment.NewLine +
+                                 "-----------------------------------------------------------------------------" +
+                                 Environment.NewLine);
+            }
+
         }
     }
 }
