@@ -645,9 +645,32 @@ namespace Xiropht_Proxy_Solo_Miner
                     }
                 }
             }
-            catch(Exception error)
+            catch (Exception error)
             {
                 FastWriteExceptionError(error);
+                if (NetworkProxy.ListOfMiners.Count > 0)
+                {
+                    for (int i = 0; i < NetworkProxy.ListOfMiners.Count; i++)
+                    {
+                        if (i < NetworkProxy.ListOfMiners.Count)
+                        {
+                            if (NetworkProxy.ListOfMiners[i] != null)
+                            {
+                                try
+                                {
+                                    if (NetworkProxy.ListOfMiners[i].MinerConnected)
+                                    {
+                                        NetworkProxy.ListOfMiners[i].DisconnectMiner();
+                                    }
+                                }
+                                catch
+                                {
+                                    
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
