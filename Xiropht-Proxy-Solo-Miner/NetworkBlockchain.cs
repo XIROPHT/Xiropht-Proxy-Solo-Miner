@@ -183,13 +183,13 @@ namespace Xiropht_Proxy_Solo_Miner
                                     {
                                         if (!string.IsNullOrEmpty(packetEach))
                                         {
-                                            await Task.Run(async () =>
+                                            new Task(async () =>
                                             {
                                                 if (!await HandlePacketBlockchainAsync(packetEach.Replace("*", "")))
                                                 {
                                                     IsConnected = false;
                                                 }
-                                            }).ConfigureAwait(false);
+                                            }).Start();
                                         }
                                     }
                                 }
@@ -197,24 +197,24 @@ namespace Xiropht_Proxy_Solo_Miner
                             else
                             {
 
-                                await Task.Run(async () =>
+                                new Task(async () =>
                                 {
                                     if (!await HandlePacketBlockchainAsync(packet.Replace("*", "")))
                                     {
                                         IsConnected = false;
                                     }
-                                }).ConfigureAwait(false);
+                                }).Start();
                             }
                         }
                         else
                         {
-                            await Task.Run(async () =>
+                            new Task(async () =>
                             {
                                 if (!await HandlePacketBlockchainAsync(packet))
                                 {
                                     IsConnected = false;
                                 }
-                            }).ConfigureAwait(false);
+                            }).Start();
                         }
                     }
                     catch
