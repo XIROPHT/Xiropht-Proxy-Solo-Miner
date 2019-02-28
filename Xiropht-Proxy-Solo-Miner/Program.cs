@@ -139,7 +139,7 @@ namespace Xiropht_Proxy_Solo_Miner
             };
 #endif
             Thread.CurrentThread.Name = Path.GetFileName(Environment.GetCommandLineArgs()[0]);
-            ConsoleLog.WriteLine("Xiropht Proxy Solo Miner - " + Assembly.GetExecutingAssembly().GetName().Version + "b");
+            ConsoleLog.WriteLine("Xiropht Proxy Solo Miner - " + Assembly.GetExecutingAssembly().GetName().Version + "R");
 
             ReadConfig();
             if (Config.WriteLog)

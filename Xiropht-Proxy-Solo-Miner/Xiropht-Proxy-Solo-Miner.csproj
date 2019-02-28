@@ -41,7 +41,7 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="Xiropht-Connector-All">
-      <HintPath>..\..\Xiropht-Connector-All\Xiropht-Connector-All\bin\Debug\Xiropht-Connector-All.dll</HintPath>
+      <HintPath>..\..\Xiropht-Connector-All\Xiropht-Connector-All\bin\Release\Xiropht-Connector-All.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
