@@ -41,9 +41,8 @@ namespace Xiropht_Proxy_Solo_Miner
                         var tcpMiner = await ProxyListener.AcceptTcpClientAsync().ConfigureAwait(false);
                         string ip = ((IPEndPoint)(tcpMiner.Client.RemoteEndPoint)).Address.ToString();
                         TotalConnectedMiner++;
-                        ConsoleLog.WriteLine("New miner connected: " + ip);
 
-                        var cw = new Miner(tcpMiner, ListOfMiners.Count + 1);
+                        var cw = new Miner(tcpMiner, ListOfMiners.Count + 1, ip);
                         ListOfMiners.Add(cw);
 
                         await Task.Factory.StartNew(() => cw.HandleMinerAsync(), CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).ConfigureAwait(false);
@@ -124,20 +123,20 @@ namespace Xiropht_Proxy_Solo_Miner
         public TcpClient tcpMiner;
         public bool MinerConnected;
         public bool MinerInitialized;
-        public int MinerDifficulty;
-        public int MinerDifficultyPosition;
         public string MinerName;
         public string MinerVersion;
         public int MinerId;
+        public string MinerIp;
 
 
-        public Miner(TcpClient tcpClient, int id)
+        public Miner(TcpClient tcpClient, int id, string ip)
         {
             tcpMiner = tcpClient;
             MinerId = id;
+            MinerIp = ip;
         }
 
-        private async Task CheckMinerConnectionAsync()
+    private async Task CheckMinerConnectionAsync()
         {
             while(true)
             {
@@ -226,10 +225,6 @@ namespace Xiropht_Proxy_Solo_Miner
         /// <param name="tcpMiner"></param>
         public void DisconnectMiner()
         {
-            if (NetworkBlockchain.ListMinerStats.ContainsKey(MinerName))
-            {
-                NetworkBlockchain.ListMinerStats[MinerName].MinerConnectionStatus = false;
-            }
             if (MinerInitialized)
             {
                 if (NetworkProxy.TotalConnectedMiner > 0)
@@ -242,9 +237,13 @@ namespace Xiropht_Proxy_Solo_Miner
             tcpMiner?.Close();
             tcpMiner?.Dispose();
 
-            if(MinerDifficultyPosition == 0 && MinerDifficulty == 0)
+            if (NetworkBlockchain.ListMinerStats.ContainsKey(MinerName))
             {
-                new Task(async () => await NetworkBlockchain.SpreadJobAsync()).Start();
+                NetworkBlockchain.ListMinerStats[MinerName].MinerConnectionStatus = false;
+                if (NetworkBlockchain.ListMinerStats[MinerName].MinerDifficultyEnd == 0 && NetworkBlockchain.ListMinerStats[MinerName].MinerDifficultyStart == 0)
+                {
+                    new Task(async () => await NetworkBlockchain.SpreadJobAsync()).Start();
+                }
             }
         }
 
@@ -262,8 +261,18 @@ namespace Xiropht_Proxy_Solo_Miner
                 {
                     case "MINER": // For Login.
                         MinerName = splitPacket[1];
-                        MinerDifficulty = int.Parse(splitPacket[2]);
-                        MinerDifficultyPosition = int.Parse(splitPacket[3]);
+                        var MinerDifficulty = int.Parse(splitPacket[2]);
+                        var MinerDifficultyPosition = int.Parse(splitPacket[3]);
+                        if (MinerDifficulty > 100 || MinerDifficultyPosition > 100 || MinerDifficulty < 0 || MinerDifficultyPosition < 0)
+                        {
+                            MinerDifficulty = 0;
+                            MinerDifficultyPosition = 0;
+                        }
+                        if (MinerDifficultyPosition > MinerDifficulty)
+                        {
+                            MinerDifficulty = 0;
+                            MinerDifficultyPosition = 0;
+                        }
                         if (splitPacket.Length > 4)
                         {
                             MinerVersion = splitPacket[4];
@@ -272,10 +281,13 @@ namespace Xiropht_Proxy_Solo_Miner
                         {
                             NetworkBlockchain.ListMinerStats[MinerName].MinerConnectionStatus = true;
                             NetworkBlockchain.ListMinerStats[MinerName].MinerVersion = MinerVersion;
+                            NetworkBlockchain.ListMinerStats[MinerName].MinerDifficultyStart = MinerDifficultyPosition;
+                            NetworkBlockchain.ListMinerStats[MinerName].MinerDifficultyEnd = MinerDifficulty;
+
                         }
                         else
                         {
-                            NetworkBlockchain.ListMinerStats.Add(MinerName, new ClassMinerStats() { MinerConnectionStatus = true, MinerTotalGoodShare = 0, MinerVersion = MinerVersion });
+                            NetworkBlockchain.ListMinerStats.Add(MinerName, new ClassMinerStats() { MinerConnectionStatus = true, MinerTotalGoodShare = 0, MinerVersion = MinerVersion, MinerDifficultyStart = MinerDifficultyPosition, MinerDifficultyEnd = MinerDifficulty });
                         }
                         if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendLoginAccepted + "|NO").ConfigureAwait(false))
                         {

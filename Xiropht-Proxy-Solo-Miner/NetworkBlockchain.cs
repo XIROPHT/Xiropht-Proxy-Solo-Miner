@@ -18,6 +18,9 @@ namespace Xiropht_Proxy_Solo_Miner
         public int MinerTotalShare;
         public string MinerVersion;
         public int MinerTotalInvalidShare;
+        public int MinerDifficultyStart;
+        public int MinerDifficultyEnd;
+        public string MinerIp;
     }
 
     public class NetworkBlockchain
@@ -450,7 +453,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                             {
                                                 if (NetworkProxy.ListOfMiners[i].MinerInitialized)
                                                 {
-                                                    if (NetworkProxy.ListOfMiners[i].MinerDifficultyPosition == 0 && NetworkProxy.ListOfMiners[i].MinerDifficulty == 0)
+                                                    if (ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyStart == 0 && ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyEnd == 0)
                                                     {
                                                         i1++;
 
@@ -484,10 +487,9 @@ namespace Xiropht_Proxy_Solo_Miner
                                                     {
                                                         if (NetworkProxy.ListOfMiners[i].MinerId == minerId)
                                                         {
-                                                            Console.WriteLine(NetworkProxy.ListOfMiners[i].MinerName + " select position range: " + NetworkProxy.ListOfMiners[i].MinerDifficultyPosition);
-                                                            Console.WriteLine(NetworkProxy.ListOfMiners[i].MinerName + " select pourcentage range: " + NetworkProxy.ListOfMiners[i].MinerDifficulty);
-                                                            var minerJobRangePosition = NetworkProxy.ListOfMiners[i].MinerDifficultyPosition;
-                                                            var minerJobRangePourcentage = NetworkProxy.ListOfMiners[i].MinerDifficulty;
+                                                            Console.WriteLine(NetworkProxy.ListOfMiners[i].MinerName + " select start position range: " + ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyStart + "| select end position range: " + ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyEnd);
+                                                            var minerJobRangePosition = ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyStart;
+                                                            var minerJobRangePourcentage = ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyEnd;
 
                                                             if (minerJobRangePourcentage <= 0)
                                                             {
@@ -559,7 +561,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                             {
                                                 if (NetworkProxy.ListOfMiners[i].MinerInitialized)
                                                 {
-                                                    if (NetworkProxy.ListOfMiners[i].MinerDifficultyPosition == 0 && NetworkProxy.ListOfMiners[i].MinerDifficulty == 0)
+                                                    if (ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyStart == 0 && ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyEnd == 0)
                                                     {
                                                         i1++;
 
@@ -587,10 +589,9 @@ namespace Xiropht_Proxy_Solo_Miner
                                                     }
                                                     else
                                                     {
-                                                        Console.WriteLine(NetworkProxy.ListOfMiners[i].MinerName + " select position range: " + NetworkProxy.ListOfMiners[i].MinerDifficultyPosition);
-                                                        Console.WriteLine(NetworkProxy.ListOfMiners[i].MinerName + " select pourcentage range: " + NetworkProxy.ListOfMiners[i].MinerDifficulty);
-                                                        var minerJobRangePosition = NetworkProxy.ListOfMiners[i].MinerDifficultyPosition;
-                                                        var minerJobRangePourcentage = NetworkProxy.ListOfMiners[i].MinerDifficulty;
+                                                        Console.WriteLine(NetworkProxy.ListOfMiners[i].MinerName + " select start position range: " + ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyStart + "| select end position range: " + ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyEnd);
+                                                        var minerJobRangePosition = ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyStart;
+                                                        var minerJobRangePourcentage = ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyEnd;
 
                                                         if (minerJobRangePourcentage <= 0)
                                                         {

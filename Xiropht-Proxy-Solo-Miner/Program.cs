@@ -227,7 +227,14 @@ namespace Xiropht_Proxy_Solo_Miner
                     {
                         foreach (var minerStats in NetworkBlockchain.ListMinerStats)
                         {
-                            ConsoleLog.WriteLine("Miner name: " + minerStats.Key);
+                            if (minerStats.Value.MinerDifficultyStart == 0 && minerStats.Value.MinerDifficultyEnd == 0)
+                            {
+                                ConsoleLog.WriteLine("Miner name: " + minerStats.Key + " - Select range: Automatic - IP: " + minerStats.Value.MinerIp);
+                            }
+                            else
+                            {
+                                ConsoleLog.WriteLine("Miner name: " + minerStats.Key + " - Select range: " + minerStats.Value.MinerDifficultyStart + "|" + minerStats.Value.MinerDifficultyEnd + " - IP: " + minerStats.Value.MinerIp);
+                            }
                             if (minerStats.Value.MinerConnectionStatus)
                             {
                                 ConsoleLog.WriteLine("Miner status: Connected.");
