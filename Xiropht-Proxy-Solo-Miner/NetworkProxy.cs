@@ -283,11 +283,11 @@ namespace Xiropht_Proxy_Solo_Miner
                             NetworkBlockchain.ListMinerStats[MinerName].MinerVersion = MinerVersion;
                             NetworkBlockchain.ListMinerStats[MinerName].MinerDifficultyStart = MinerDifficultyPosition;
                             NetworkBlockchain.ListMinerStats[MinerName].MinerDifficultyEnd = MinerDifficulty;
-
+                            NetworkBlockchain.ListMinerStats[MinerName].MinerIp = MinerIp;
                         }
                         else
                         {
-                            NetworkBlockchain.ListMinerStats.Add(MinerName, new ClassMinerStats() { MinerConnectionStatus = true, MinerTotalGoodShare = 0, MinerVersion = MinerVersion, MinerDifficultyStart = MinerDifficultyPosition, MinerDifficultyEnd = MinerDifficulty });
+                            NetworkBlockchain.ListMinerStats.Add(MinerName, new ClassMinerStats() { MinerConnectionStatus = true, MinerTotalGoodShare = 0, MinerVersion = MinerVersion, MinerDifficultyStart = MinerDifficultyPosition, MinerDifficultyEnd = MinerDifficulty, MinerIp = MinerIp });
                         }
                         if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendLoginAccepted + "|NO").ConfigureAwait(false))
                         {
