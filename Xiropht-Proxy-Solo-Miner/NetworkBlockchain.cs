@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Xiropht_Connector_All.Seed;
@@ -20,7 +19,11 @@ namespace Xiropht_Proxy_Solo_Miner
         public int MinerTotalInvalidShare;
         public int MinerDifficultyStart;
         public int MinerDifficultyEnd;
+        public long MinerLastBlockTemplateReceived;
+        public string MinerHashrateExpected;
+        public string MinerHashrateCalculated;
         public string MinerIp;
+        public string MinerName;
     }
 
     public class NetworkBlockchain
@@ -52,6 +55,11 @@ namespace Xiropht_Proxy_Solo_Miner
         public static string CurrentBlockIndication;
         public static bool FirstStart;
         public static bool LoginAccepted;
+
+        /// <summary>
+        /// For calculate hashrate;
+        /// </summary>
+        public static int FirstBlockId;
 
         /// <summary>
         /// List of Miner stats.
@@ -320,7 +328,7 @@ namespace Xiropht_Proxy_Solo_Miner
                     {
                         ConsoleLog.WriteLine("New block to mining: " + splitBlockContent[0]);
                         Blocktemplate = splitPacket[1];
-                        new Task(async () => await SpreadJobAsync()).Start();
+                        new Task(() => SpreadJobAsync()).Start();
                     }
                     break;
                 case ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus:
@@ -403,13 +411,17 @@ namespace Xiropht_Proxy_Solo_Miner
             return true;
         }
 
-        public static async Task SpreadJobAsync(int minerId = -1)
+        public static async void SpreadJobAsync(int minerId = -1)
         {
             try
             {
                 var splitBlockContent = Blocktemplate.Split(new[] { "&" }, StringSplitOptions.None);
 
                 CurrentBlockId = splitBlockContent[0].Replace("ID=", "");
+                if (FirstBlockId == 0)
+                {
+                    int.TryParse(CurrentBlockId, out FirstBlockId);
+                }
                 if (CurrentBlockId != "" && CurrentBlockId.Length > 0)
                 {
                     CurrentBlockHash = splitBlockContent[1].Replace("HASH=", "");
@@ -481,6 +493,10 @@ namespace Xiropht_Proxy_Solo_Miner
                                                                 }
                                                                 NetworkProxy.ListOfMiners[i] = null;
                                                             }
+                                                            else
+                                                            {
+                                                                ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerLastBlockTemplateReceived = DateTimeOffset.Now.ToUnixTimeSeconds();
+                                                            }
                                                         }
                                                     }
                                                     else
@@ -532,6 +548,10 @@ namespace Xiropht_Proxy_Solo_Miner
 
                                                                 }
                                                                 NetworkProxy.ListOfMiners[i] = null;
+                                                            }
+                                                            else
+                                                            {
+                                                                ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerLastBlockTemplateReceived = DateTimeOffset.Now.ToUnixTimeSeconds();
                                                             }
                                                         }
                                                     }
@@ -586,6 +606,10 @@ namespace Xiropht_Proxy_Solo_Miner
                                                             }
                                                             NetworkProxy.ListOfMiners[i] = null;
                                                         }
+                                                        else
+                                                        {
+                                                            ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerLastBlockTemplateReceived = DateTimeOffset.Now.ToUnixTimeSeconds();
+                                                        }
                                                     }
                                                     else
                                                     {
@@ -635,6 +659,10 @@ namespace Xiropht_Proxy_Solo_Miner
                                                             }
                                                             NetworkProxy.ListOfMiners[i] = null;
                                                         }
+                                                        else
+                                                        {
+                                                            ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerLastBlockTemplateReceived = DateTimeOffset.Now.ToUnixTimeSeconds();
+                                                        }
                                                     }
                                                 }
 
@@ -678,6 +706,7 @@ namespace Xiropht_Proxy_Solo_Miner
                     }
                 }
             }
+            
         }
 
         /// <summary>

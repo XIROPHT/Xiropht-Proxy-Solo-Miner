@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Threading;
 using Xiropht_Connector_All.Utils;
+using Xiropht_Proxy_Solo_Miner.API;
 
 namespace Xiropht_Proxy_Solo_Miner
 {
@@ -70,9 +70,29 @@ namespace Xiropht_Proxy_Solo_Miner
                     }
                     else if (line.Contains("WRITE_LOG="))
                     {
-                        if (line.Replace("WRITE_LOG=", "") == "Y")
+                        string choose = line.Replace("WRITE_LOG=", "").ToLower();
+                        if (choose == "y")
                         {
                             Config.WriteLog = true;
+                        }
+                    }
+                    else if (line.Contains("ENABLE_API="))
+                    {
+                        string choose = line.Replace("ENABLE_API=", "").ToLower();
+                        if (choose == "y")
+                        {
+                            Config.EnableApi = true;
+                        }
+                    }
+                    else if (line.Contains("API_PORT="))
+                    {
+                        string choose = line.Replace("API_PORT=", "").ToLower();
+                        if (int.TryParse(choose, out var port))
+                        {
+                            if (port > 0)
+                            {
+                                Config.ProxyApiPort = port;
+                            }
                         }
                     }
                 }
@@ -89,9 +109,25 @@ namespace Xiropht_Proxy_Solo_Miner
                 Config.ProxyPort = int.Parse(Console.ReadLine());
                 Console.WriteLine("Do you want enable log system ? [Y/N]: ");
                 string choose = Console.ReadLine();
-                if (choose == "Y" || choose == "y")
+                if (choose.ToLower() == "y")
                 {
                     Config.WriteLog = true;
+                }
+                Console.WriteLine("Do you want to enable the API system? [Y/N]: ");
+                choose = Console.ReadLine();
+                if (choose.ToLower() == "y")
+                {
+                    Config.EnableApi = true;
+                }
+                if (Config.EnableApi)
+                {
+                    Console.WriteLine("Then, do you want to select your own API port? [Default 8000]: ");
+                    choose = Console.ReadLine();
+                    int port = 0;
+                    if (int.TryParse(choose, out port))
+                    {
+                        Config.ProxyApiPort = port;
+                    }
                 }
                 StreamWriter writeConfig = new StreamWriter(GetCurrentPathFile());
                 writeConfig.WriteLine("WALLET_ADDRESS=" + Config.WalletAddress);
@@ -108,6 +144,21 @@ namespace Xiropht_Proxy_Solo_Miner
                 else
                 {
                     writeConfig.WriteLine("WRITE_LOG=N");
+                    writeConfig.Flush();
+                }
+                if (Config.EnableApi)
+                {
+                    writeConfig.WriteLine("ENABLE_API=Y");
+                    writeConfig.Flush();
+                    writeConfig.WriteLine("API_PORT=" + Config.ProxyApiPort);
+                    writeConfig.Flush();
+                }
+                else
+                {
+                    writeConfig.WriteLine("ENABLE_API=N");
+                    writeConfig.Flush();
+
+                    writeConfig.WriteLine("API_PORT=" + Config.ProxyApiPort);
                     writeConfig.Flush();
                 }
                 writeConfig.Close();
@@ -151,6 +202,12 @@ namespace Xiropht_Proxy_Solo_Miner
             ConsoleLog.WriteLine("Proxy IP Selected: " + Config.ProxyIP);
             ConsoleLog.WriteLine("Proxy Port Selected: " + Config.ProxyPort);
 
+            if (Config.EnableApi)
+            {
+                ConsoleLog.WriteLine("Start HTTP API..");
+                ClassApi.StartApiHttpServer();
+                ConsoleLog.WriteLine("HTTP API started.");
+            }
 
             ThreadCheckNetworkConnection = new Thread(async delegate ()
             {
@@ -191,7 +248,6 @@ namespace Xiropht_Proxy_Solo_Miner
             {
                 while (true)
                 {
-
                     StringBuilder input = new StringBuilder();
                     var key = Console.ReadKey(true);
                     input.Append(key.KeyChar);
@@ -247,6 +303,12 @@ namespace Xiropht_Proxy_Solo_Miner
                             ConsoleLog.WriteLine("Miner total share: " + minerStats.Value.MinerTotalShare);
                             ConsoleLog.WriteLine("Miner total good share: " + minerStats.Value.MinerTotalGoodShare);
                             ConsoleLog.WriteLine("Miner total invalid share: " + minerStats.Value.MinerTotalInvalidShare);
+                            ConsoleLog.WriteLine("Miner Hashrate Expected: " + minerStats.Value.MinerHashrateExpected);
+
+
+
+                            ConsoleLog.WriteLine("Miner Hashrate Calculated from blocks found: " + minerStats.Value.MinerHashrateCalculated);
+
                             string version = minerStats.Value.MinerVersion;
                             if (string.IsNullOrEmpty(version))
                             {

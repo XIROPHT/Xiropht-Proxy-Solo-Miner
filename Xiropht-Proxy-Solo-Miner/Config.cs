@@ -6,5 +6,7 @@
         public static int ProxyPort;
         public static string ProxyIP;
         public static bool WriteLog;
+        public static bool EnableApi;
+        public static int ProxyApiPort = 8000;
     }
 }

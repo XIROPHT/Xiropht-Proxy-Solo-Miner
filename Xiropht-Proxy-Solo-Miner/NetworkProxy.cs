@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Xiropht_Connector_All.SoloMining;
+using Xiropht_Connector_All.Utils;
 
 namespace Xiropht_Proxy_Solo_Miner
 {
@@ -78,13 +78,13 @@ namespace Xiropht_Proxy_Solo_Miner
 
     public class IncommingConnectionObjectPacket : IDisposable
     {
-        public char[] buffer;
+        public byte[] buffer;
         public string packet;
         private bool disposed;
 
         public IncommingConnectionObjectPacket()
         {
-            buffer = new char[8192];
+            buffer = new byte[8192];
             packet = string.Empty;
         }
 
@@ -136,9 +136,9 @@ namespace Xiropht_Proxy_Solo_Miner
             MinerIp = ip;
         }
 
-    private async Task CheckMinerConnectionAsync()
+        private async Task CheckMinerConnectionAsync()
         {
-            while(true)
+            while(MinerConnected)
             {
                 if (!MinerConnected)
                 {
@@ -182,8 +182,14 @@ namespace Xiropht_Proxy_Solo_Miner
             MinerConnected = true;
             await Task.Factory.StartNew(CheckMinerConnectionAsync, CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).ConfigureAwait(false);
 
-            var minerNetworkReader = new StreamReader(new NetworkStream(tcpMiner.Client, true));
+            try
+            {
+                tcpMiner.SetSocketKeepAliveValues(20 * 60 * 1000, 30 * 1000);
+            }
+            catch
+            {
 
+            }
             while (MinerConnected && NetworkBlockchain.IsConnected)
             {
                 if (!MinerConnected)
@@ -192,14 +198,19 @@ namespace Xiropht_Proxy_Solo_Miner
                 }
                 try
                 {
-
-                    using (IncommingConnectionObjectPacket bufferPacket = new IncommingConnectionObjectPacket())
+                    using (var networkStream = new NetworkStream(tcpMiner.Client))
                     {
-                        int received = await minerNetworkReader.ReadAsync(bufferPacket.buffer, 0, bufferPacket.buffer.Length).ConfigureAwait(false);
-                        if (received > 0)
+                        using (IncommingConnectionObjectPacket bufferPacket = new IncommingConnectionObjectPacket())
                         {
-                            bufferPacket.packet = new string(bufferPacket.buffer, 0, received);
-                            await Task.Run(async () => await HandlePacketMinerAsync(bufferPacket.packet)).ConfigureAwait(false);
+                            int received = 0;
+                            while ((received = await networkStream.ReadAsync(bufferPacket.buffer, 0, bufferPacket.buffer.Length)) > 0)
+                            {
+                                if (received > 0)
+                                {
+                                    bufferPacket.packet = Encoding.UTF8.GetString(bufferPacket.buffer, 0, received);
+                                    new Task(() => HandlePacketMinerAsync(bufferPacket.packet)).Start();
+                                }
+                            }
                         }
                     }
                 }
@@ -242,7 +253,7 @@ namespace Xiropht_Proxy_Solo_Miner
                 NetworkBlockchain.ListMinerStats[MinerName].MinerConnectionStatus = false;
                 if (NetworkBlockchain.ListMinerStats[MinerName].MinerDifficultyEnd == 0 && NetworkBlockchain.ListMinerStats[MinerName].MinerDifficultyStart == 0)
                 {
-                    new Task(async () => await NetworkBlockchain.SpreadJobAsync()).Start();
+                    NetworkBlockchain.SpreadJobAsync();
                 }
             }
         }
@@ -252,7 +263,7 @@ namespace Xiropht_Proxy_Solo_Miner
         /// </summary>
         /// <param name="packet"></param>
         /// <param name="tcpMiner"></param>
-        private async Task HandlePacketMinerAsync(string packet)
+        private async void HandlePacketMinerAsync(string packet)
         {
             try
             {
@@ -287,13 +298,13 @@ namespace Xiropht_Proxy_Solo_Miner
                         }
                         else
                         {
-                            NetworkBlockchain.ListMinerStats.Add(MinerName, new ClassMinerStats() { MinerConnectionStatus = true, MinerTotalGoodShare = 0, MinerVersion = MinerVersion, MinerDifficultyStart = MinerDifficultyPosition, MinerDifficultyEnd = MinerDifficulty, MinerIp = MinerIp });
+                            NetworkBlockchain.ListMinerStats.Add(MinerName, new ClassMinerStats() { MinerConnectionStatus = true, MinerTotalGoodShare = 0, MinerVersion = MinerVersion, MinerDifficultyStart = MinerDifficultyPosition, MinerDifficultyEnd = MinerDifficulty, MinerIp = MinerIp, MinerName = MinerName });
                         }
                         if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendLoginAccepted + "|NO").ConfigureAwait(false))
                         {
-                            MinerConnected = false;
+                            DisconnectMiner();
                         }
-                        
+
                         break;
                     case ClassSoloMiningPacketEnumeration.SoloMiningSendPacketEnumeration.ReceiveAskContentBlockMethod: // Receive ask to know content of selected mining method.
                         string dataMethod = null;
@@ -324,7 +335,7 @@ namespace Xiropht_Proxy_Solo_Miner
                         {
                             if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendContentBlockMethod + "|" + dataMethod).ConfigureAwait(false))
                             {
-                                MinerConnected = false;
+                                DisconnectMiner();
                             }
                         }
                         break;
@@ -354,12 +365,32 @@ namespace Xiropht_Proxy_Solo_Miner
                         }
                         if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendListBlockMethod + "|" + dateListMethod).ConfigureAwait(false))
                         {
-                            MinerConnected = false;
+                            DisconnectMiner();
                         }
                         break;
                     case ClassSoloMiningPacketEnumeration.SoloMiningSendPacketEnumeration.ReceiveAskCurrentBlockMining:
                         MinerInitialized = true;
-                        await NetworkBlockchain.SpreadJobAsync(MinerId);
+                        NetworkBlockchain.SpreadJobAsync(MinerId);
+                        break;
+                    case ClassSoloMiningPacketEnumeration.SoloMiningSendPacketEnumeration.ShareHashrate:
+                        if (NetworkBlockchain.ListMinerStats.ContainsKey(MinerName))
+                        {
+                            NetworkBlockchain.ListMinerStats[MinerName].MinerHashrateExpected = splitPacket[1];
+                            var currentBlockId = 0;
+                            if (int.TryParse(NetworkBlockchain.CurrentBlockId, out currentBlockId))
+                            {
+                                var differenceBlockId = (float)currentBlockId - NetworkBlockchain.FirstBlockId;
+                                if (differenceBlockId > 0)
+                                {
+                                    var hashrateCalculated = Math.Round(((NetworkBlockchain.ListMinerStats[MinerName].MinerTotalGoodShare / differenceBlockId * 100) * 1024), 0);
+                                    NetworkBlockchain.ListMinerStats[MinerName].MinerHashrateCalculated = "" + hashrateCalculated;
+                                }
+                                else
+                                {
+                                    NetworkBlockchain.ListMinerStats[MinerName].MinerHashrateCalculated = "0";
+                                }
+                            }
+                        }
                         break;
                     case ClassSoloMiningPacketEnumeration.SoloMiningSendPacketEnumeration.ReceiveJob:
                         NetworkBlockchain.ListMinerStats[MinerName].MinerTotalShare++;
@@ -370,7 +401,7 @@ namespace Xiropht_Proxy_Solo_Miner
                             NetworkBlockchain.ListMinerStats[MinerName].MinerTotalGoodShare++;
                             if (!await NetworkBlockchain.SendPacketAsync(packet, true).ConfigureAwait(false))
                             {
-                                NetworkBlockchain.IsConnected = false;
+                                DisconnectMiner();
                             }
                         }
                         else
@@ -378,7 +409,7 @@ namespace Xiropht_Proxy_Solo_Miner
                             NetworkBlockchain.ListMinerStats[MinerName].MinerTotalInvalidShare++;
                             if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad).ConfigureAwait(false))
                             {
-                                MinerConnected = false;
+                                DisconnectMiner();
                             }
                         }
                         break;
@@ -407,9 +438,12 @@ namespace Xiropht_Proxy_Solo_Miner
         {
             try
             {
-                var bytePacket = Encoding.UTF8.GetBytes(packet);
-                await tcpMiner.GetStream().WriteAsync(bytePacket, 0, bytePacket.Length).ConfigureAwait(false);
-                await tcpMiner.GetStream().FlushAsync().ConfigureAwait(false);
+                using (var networkStream = new NetworkStream(tcpMiner.Client))
+                {
+                    var bytePacket = Encoding.UTF8.GetBytes(packet);
+                    await networkStream.WriteAsync(bytePacket, 0, bytePacket.Length).ConfigureAwait(false);
+                    await networkStream.FlushAsync().ConfigureAwait(false);
+                }
             }
             catch
             {
