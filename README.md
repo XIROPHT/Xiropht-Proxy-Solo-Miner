@@ -27,4 +27,4 @@ Follow this instruction for make your own linux binary:
 mkbundle Xiropht-Proxy-Solo-Miner.exe -o Xiropht-Proxy-Solo-Miner Xiropht-Connector-All.dll NCalc.dll Antlr3.Runtime.dll --deps -z --static
 
 
-
+Newtonsoft.Json library is used since version 0.0.6.4R for the API HTTP system: https://github.com/JamesNK/Newtonsoft.Json
