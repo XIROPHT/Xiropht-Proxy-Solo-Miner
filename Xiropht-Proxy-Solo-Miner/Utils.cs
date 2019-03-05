@@ -123,5 +123,41 @@ namespace Xiropht_Proxy_Solo_Miner
             }
             return null;
         }
+
+        public static float GetMinerHashrateExpected()
+        {
+            float totalHashrateExpected = 0;
+            foreach (var minerObjectHashrate in NetworkBlockchain.ListMinerStats)
+            {
+                if (minerObjectHashrate.Value.MinerConnectionStatus)
+                {
+                    totalHashrateExpected += float.Parse(minerObjectHashrate.Value.MinerHashrateExpected);
+                }
+            }
+            return totalHashrateExpected;
+        }
+
+        public static float GetMinerHashrateCalculated()
+        {
+            float totalHashrateCalculated = 0;
+            foreach (var minerObjectHashrate in NetworkBlockchain.ListMinerStats)
+            {
+                if (minerObjectHashrate.Value.MinerConnectionStatus)
+                {
+                    totalHashrateCalculated += float.Parse(minerObjectHashrate.Value.MinerHashrateCalculated);
+                }
+            }
+            return totalHashrateCalculated;
+        }
+
+        public static int GetTotalBlockFound()
+        {
+            int totalBlockFound = 0;
+            foreach (var minerObjectBlock in NetworkBlockchain.ListMinerStats)
+            {
+                totalBlockFound += minerObjectBlock.Value.MinerTotalGoodShare;
+            }
+            return totalBlockFound;
+        }
     }
 }

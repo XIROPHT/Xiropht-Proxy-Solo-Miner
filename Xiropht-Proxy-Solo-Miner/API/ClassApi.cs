@@ -13,8 +13,11 @@ namespace Xiropht_Proxy_Solo_Miner.API
 {
     public class ClassApiHttpRequestEnumeration
     {
+        public const string GetProxyStats = "get_proxy_stats";
         public const string GetTotalMiner = "get_total_miner";
         public const string GetMinerById = "get_miner_by_id";
+        public const string GetTotalHashrate = "get_total_hashrate";
+        public const string GetTotalBlock = "get_total_block";
         public const string MinerNotExist = "miner_not_exist";
         public const string PacketNotExist = "not_exist";
     }
@@ -178,6 +181,17 @@ namespace Xiropht_Proxy_Solo_Miner.API
             }
             switch (packet)
             {
+                case ClassApiHttpRequestEnumeration.GetProxyStats:
+                    Dictionary<string, string> proxyContent = new Dictionary<string, string>
+                    {
+                         { "proxy_total_miners", "" + NetworkBlockchain.ListMinerStats.Count },
+                         { "proxy_total_block_found", "" + Utils.GetTotalBlockFound() },
+                         { "proxy_hashrate_expected", "" + Utils.GetMinerHashrateExpected() },
+                         { "proxy_hashrate_calculated", "" + Utils.GetMinerHashrateCalculated() }
+                    };
+                    await BuildAndSendHttpPacketAsync(null, true, proxyContent);
+                    proxyContent.Clear();
+                    break;
                 case ClassApiHttpRequestEnumeration.GetTotalMiner:
                     await BuildAndSendHttpPacketAsync(""+NetworkBlockchain.ListMinerStats.Count);
                     break;
@@ -186,19 +200,23 @@ namespace Xiropht_Proxy_Solo_Miner.API
                     if (minerObject != null)
                     {
                         var status = "disconnected";
+                        var hashrate = "0";
+                        var hashrateCalculated = "0";
                         if (minerObject.MinerConnectionStatus)
                         {
                             status = "connected";
+                            hashrate = minerObject.MinerHashrateExpected;
+                            hashrateCalculated = minerObject.MinerHashrateCalculated;
                         }
                         Dictionary<string, string> minerContent = new Dictionary<string, string>
                         {
                             { "miner_name", "" + minerObject.MinerName },
-                            {"miner_status", status },
+                            { "miner_status", status },
                             { "miner_total_share", "" + minerObject.MinerTotalShare },
                             { "miner_total_good_share", "" + minerObject.MinerTotalGoodShare },
                             { "miner_total_invalid_share", "" + minerObject.MinerTotalInvalidShare },
-                            { "miner_hashrate", "" + minerObject.MinerHashrateExpected },
-                            { "miner_calculated_hashrate", "" + minerObject.MinerHashrateCalculated },
+                            { "miner_hashrate", "" + hashrate },
+                            { "miner_calculated_hashrate", "" + hashrateCalculated },
                             { "miner_range", "" + minerObject.MinerDifficultyStart+"|"+minerObject.MinerDifficultyEnd },
                             { "miner_version", minerObject.MinerVersion }
                         };
@@ -210,6 +228,19 @@ namespace Xiropht_Proxy_Solo_Miner.API
                     {
                         await BuildAndSendHttpPacketAsync(ClassApiHttpRequestEnumeration.MinerNotExist);
                     }
+                    break;
+                case ClassApiHttpRequestEnumeration.GetTotalHashrate:
+
+                    Dictionary<string, string> proxyContentHashrate = new Dictionary<string, string>
+                    {
+                         { "proxy_hashrate_expected", "" + Utils.GetMinerHashrateExpected() },
+                         { "proxy_hashrate_calculated", "" + Utils.GetMinerHashrateCalculated() }
+                    };
+                    await BuildAndSendHttpPacketAsync(null, true, proxyContentHashrate);
+                    proxyContentHashrate.Clear();
+                    break;
+                case ClassApiHttpRequestEnumeration.GetTotalBlock:
+                    await BuildAndSendHttpPacketAsync("" + Utils.GetTotalBlockFound());
                     break;
                 default:
                     await BuildAndSendHttpPacketAsync(ClassApiHttpRequestEnumeration.PacketNotExist);
