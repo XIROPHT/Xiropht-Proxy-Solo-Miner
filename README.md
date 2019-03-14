@@ -24,7 +24,8 @@ Netframework 4.6.1 minimum is required or Mono for Linux OS.
 If the linux binary don't work you can compile the Windows version yourself with the package: mono-complete.
 Follow this instruction for make your own linux binary:
 
+~~~text
 mkbundle Xiropht-Proxy-Solo-Miner.exe -o Xiropht-Proxy-Solo-Miner Xiropht-Connector-All.dll NCalc.dll Antlr3.Runtime.dll --deps -z --static
-
+~~~
 
 **Newtonsoft.Json library is used since version 0.0.6.4R for the API HTTP system: https://github.com/JamesNK/Newtonsoft.Json**
