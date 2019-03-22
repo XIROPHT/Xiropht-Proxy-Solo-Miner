@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -167,7 +168,6 @@ namespace Xiropht_Proxy_Solo_Miner
 
         static void Main(string[] args)
         {
-#if DEBUG
             AppDomain.CurrentDomain.UnhandledException += delegate (object sender, UnhandledExceptionEventArgs args2)
             {
                 var filePath = ConvertPath(Directory.GetCurrentDirectory() + "\\error_proxy_miner.txt");
@@ -188,7 +188,6 @@ namespace Xiropht_Proxy_Solo_Miner
                 Environment.Exit(1);
 
             };
-#endif
             Thread.CurrentThread.Name = Path.GetFileName(Environment.GetCommandLineArgs()[0]);
             ConsoleLog.WriteLine("Xiropht Proxy Solo Miner - " + Assembly.GetExecutingAssembly().GetName().Version + "R");
 

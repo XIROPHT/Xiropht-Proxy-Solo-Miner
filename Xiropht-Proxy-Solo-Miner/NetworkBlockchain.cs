@@ -272,15 +272,12 @@ namespace Xiropht_Proxy_Solo_Miner
                                     if (ListOfMiningMethodName.Contains(methodName) == false)
                                     {
                                         ListOfMiningMethodName.Add(methodName);
-
-
-                                        if(!await classSeedNodeConnector.SendPacketToSeedNodeAsync(ClassSoloMiningPacketEnumeration.SoloMiningSendPacketEnumeration.ReceiveAskContentBlockMethod + "|" + methodName, Program.NetworkCertificate, false, true).ConfigureAwait(false))
-                                        {
-                                            return false;
-                                        }
-
-                                        Thread.Sleep(1000);
                                     }
+                                    if (!await classSeedNodeConnector.SendPacketToSeedNodeAsync(ClassSoloMiningPacketEnumeration.SoloMiningSendPacketEnumeration.ReceiveAskContentBlockMethod + "|" + methodName, Program.NetworkCertificate, false, true).ConfigureAwait(false))
+                                    {
+                                        return false;
+                                    }
+                                    Thread.Sleep(1000);
                                 }
                             }
                         }
@@ -294,12 +291,12 @@ namespace Xiropht_Proxy_Solo_Miner
                                     if (ListOfMiningMethodName.Contains(methodName) == false)
                                     {
                                         ListOfMiningMethodName.Add(methodName);
-                                        if(!await classSeedNodeConnector.SendPacketToSeedNodeAsync(ClassSoloMiningPacketEnumeration.SoloMiningSendPacketEnumeration.ReceiveAskContentBlockMethod + "|" + methodName, Program.NetworkCertificate, false, true).ConfigureAwait(false))
-                                        {
-                                            return false;
-                                        }
-                                        Thread.Sleep(1000);
                                     }
+                                    if (!await classSeedNodeConnector.SendPacketToSeedNodeAsync(ClassSoloMiningPacketEnumeration.SoloMiningSendPacketEnumeration.ReceiveAskContentBlockMethod + "|" + methodName, Program.NetworkCertificate, false, true).ConfigureAwait(false))
+                                    {
+                                        return false;
+                                    }
+                                    Thread.Sleep(1000);
                                 }
                             }
                         }
@@ -309,17 +306,22 @@ namespace Xiropht_Proxy_Solo_Miner
                         if (ListOfMiningMethodName.Contains(methodList) == false)
                         {
                             ListOfMiningMethodName.Add(methodList);
-
-                            if(!await classSeedNodeConnector.SendPacketToSeedNodeAsync(ClassSoloMiningPacketEnumeration.SoloMiningSendPacketEnumeration.ReceiveAskContentBlockMethod + "|" + methodList, Program.NetworkCertificate, false, true).ConfigureAwait(false))
-                            {
-                                return false;
-                            }
-
+                        }
+                        if (!await classSeedNodeConnector.SendPacketToSeedNodeAsync(ClassSoloMiningPacketEnumeration.SoloMiningSendPacketEnumeration.ReceiveAskContentBlockMethod + "|" + methodList, Program.NetworkCertificate, false, true).ConfigureAwait(false))
+                        {
+                            return false;
                         }
                     }
                     break;
                 case ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendContentBlockMethod:
-                    ListOfMiningMethodContent.Add(splitPacket[1]);
+                    if (ListOfMiningMethodContent.Count == 0)
+                    {
+                        ListOfMiningMethodContent.Add(splitPacket[1]);
+                    }
+                    else
+                    {
+                        ListOfMiningMethodContent[0] = splitPacket[1];
+                    }
                     break;
                 case ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendCurrentBlockMining:
                     var splitBlockContent = splitPacket[1].Split(new[] { "&" }, StringSplitOptions.None);
