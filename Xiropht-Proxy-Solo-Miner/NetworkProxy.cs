@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Xiropht_Connector_All.Setting;
 using Xiropht_Connector_All.SoloMining;
 using Xiropht_Connector_All.Utils;
 
@@ -45,7 +47,7 @@ namespace Xiropht_Proxy_Solo_Miner
                         var cw = new Miner(tcpMiner, ListOfMiners.Count + 1, ip);
                         ListOfMiners.Add(cw);
 
-                        await Task.Factory.StartNew(() => cw.HandleMinerAsync(), CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).ConfigureAwait(false);
+                        await Task.Factory.StartNew(() => cw.HandleMinerAsync(), CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, PriorityScheduler.Lowest).ConfigureAwait(false);
 
                     }
                     catch
@@ -180,7 +182,7 @@ namespace Xiropht_Proxy_Solo_Miner
         public async Task HandleMinerAsync()
         {
             MinerConnected = true;
-            await Task.Factory.StartNew(CheckMinerConnectionAsync, CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).ConfigureAwait(false);
+            await Task.Factory.StartNew(CheckMinerConnectionAsync, CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, PriorityScheduler.Lowest).ConfigureAwait(false);
 
             try
             {
@@ -200,15 +202,18 @@ namespace Xiropht_Proxy_Solo_Miner
                 {
                     using (var networkStream = new NetworkStream(tcpMiner.Client))
                     {
-                        using (IncommingConnectionObjectPacket bufferPacket = new IncommingConnectionObjectPacket())
+                        using (BufferedStream bufferedStreamNetwork = new BufferedStream(networkStream, ClassConnectorSetting.MaxNetworkPacketSize))
                         {
-                            int received = 0;
-                            while ((received = await networkStream.ReadAsync(bufferPacket.buffer, 0, bufferPacket.buffer.Length)) > 0)
+                            using (IncommingConnectionObjectPacket bufferPacket = new IncommingConnectionObjectPacket())
                             {
-                                if (received > 0)
+                                int received = 0;
+                                while ((received = await bufferedStreamNetwork.ReadAsync(bufferPacket.buffer, 0, bufferPacket.buffer.Length)) > 0)
                                 {
-                                    bufferPacket.packet = Encoding.UTF8.GetString(bufferPacket.buffer, 0, received);
-                                    new Task(() => HandlePacketMinerAsync(bufferPacket.packet)).Start();
+                                    if (received > 0)
+                                    {
+                                        bufferPacket.packet = Encoding.UTF8.GetString(bufferPacket.buffer, 0, received);
+                                        await Task.Factory.StartNew(() => HandlePacketMinerAsync(bufferPacket.packet), CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, PriorityScheduler.Lowest).ConfigureAwait(false);
+                                    }
                                 }
                             }
                         }
@@ -440,9 +445,12 @@ namespace Xiropht_Proxy_Solo_Miner
             {
                 using (var networkStream = new NetworkStream(tcpMiner.Client))
                 {
-                    var bytePacket = Encoding.UTF8.GetBytes(packet);
-                    await networkStream.WriteAsync(bytePacket, 0, bytePacket.Length).ConfigureAwait(false);
-                    await networkStream.FlushAsync().ConfigureAwait(false);
+                    using (BufferedStream bufferedStreamNetwork = new BufferedStream(networkStream, ClassConnectorSetting.MaxNetworkPacketSize))
+                    {
+                        var bytePacket = Encoding.UTF8.GetBytes(packet);
+                        await bufferedStreamNetwork.WriteAsync(bytePacket, 0, bytePacket.Length).ConfigureAwait(false);
+                        await bufferedStreamNetwork.FlushAsync().ConfigureAwait(false);
+                    }
                 }
             }
             catch

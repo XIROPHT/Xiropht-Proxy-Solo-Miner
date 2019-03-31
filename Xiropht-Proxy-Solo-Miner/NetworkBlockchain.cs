@@ -194,13 +194,13 @@ namespace Xiropht_Proxy_Solo_Miner
                                     {
                                         if (!string.IsNullOrEmpty(packetEach))
                                         {
-                                            new Task(async () =>
+                                            await Task.Factory.StartNew(async () =>
                                             {
                                                 if (!await HandlePacketBlockchainAsync(packetEach.Replace("*", "")))
                                                 {
                                                     IsConnected = false;
                                                 }
-                                            }).Start();
+                                            }, CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, PriorityScheduler.Lowest).ConfigureAwait(false);
                                         }
                                     }
                                 }
@@ -208,24 +208,24 @@ namespace Xiropht_Proxy_Solo_Miner
                             else
                             {
 
-                                new Task(async () =>
+                                await Task.Factory.StartNew(async () =>
                                 {
                                     if (!await HandlePacketBlockchainAsync(packet.Replace("*", "")))
                                     {
                                         IsConnected = false;
                                     }
-                                }).Start();
+                                }, CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, PriorityScheduler.Lowest).ConfigureAwait(false);
                             }
                         }
                         else
                         {
-                            new Task(async () =>
+                            await Task.Factory.StartNew(async () =>
                             {
                                 if (!await HandlePacketBlockchainAsync(packet))
                                 {
                                     IsConnected = false;
                                 }
-                            }).Start();
+                            }, CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, PriorityScheduler.Lowest).ConfigureAwait(false);
                         }
                     }
                     catch
@@ -277,7 +277,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                     {
                                         return false;
                                     }
-                                    Thread.Sleep(1000);
+                                    await Task.Delay(1000);
                                 }
                             }
                         }
@@ -296,7 +296,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                     {
                                         return false;
                                     }
-                                    Thread.Sleep(1000);
+                                    await Task.Delay(1000);
                                 }
                             }
                         }
@@ -330,7 +330,7 @@ namespace Xiropht_Proxy_Solo_Miner
                     {
                         ConsoleLog.WriteLine("New block to mining: " + splitBlockContent[0]);
                         Blocktemplate = splitPacket[1];
-                        new Task(() => SpreadJobAsync()).Start();
+                        await Task.Factory.StartNew(() => SpreadJobAsync(), CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, PriorityScheduler.Lowest).ConfigureAwait(false);
                     }
                     break;
                 case ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus:
@@ -413,6 +413,10 @@ namespace Xiropht_Proxy_Solo_Miner
             return true;
         }
 
+        /// <summary>
+        /// Spread job range to miners.
+        /// </summary>
+        /// <param name="minerId"></param>
         public static async void SpreadJobAsync(int minerId = -1)
         {
             try

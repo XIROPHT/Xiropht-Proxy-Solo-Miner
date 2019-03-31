@@ -10,8 +10,10 @@ namespace Xiropht_Proxy_Solo_Miner
 
         public static void InitializeLog()
         {
-            WriterLog = new StreamWriter(Program.ConvertPath(Directory.GetCurrentDirectory() + "\\proxy_log.log"));
-            WriterLog.AutoFlush = true;
+            WriterLog = new StreamWriter(Program.ConvertPath(Directory.GetCurrentDirectory() + "\\proxy_log.log"))
+            {
+                AutoFlush = true
+            };
         }
 
         public static void WriteLine(string log)
@@ -19,7 +21,7 @@ namespace Xiropht_Proxy_Solo_Miner
             Console.WriteLine(DateTime.Now + " - " + log);
             if (Config.WriteLog)
             {
-                Task.Run(async delegate
+                    Task.Run(async delegate
                     {
                         await WriterLog.WriteLineAsync(DateTime.Now + " - " + log).ConfigureAwait(false);
                     });

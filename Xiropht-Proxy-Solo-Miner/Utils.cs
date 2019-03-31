@@ -40,7 +40,7 @@ namespace Xiropht_Proxy_Solo_Miner
                 var stateOfConnection = GetState(ClientSocket);
 
 
-                if (stateOfConnection != TcpState.Closed && stateOfConnection != TcpState.CloseWait && stateOfConnection != TcpState.Closing)
+                if (stateOfConnection != TcpState.Closed && stateOfConnection != TcpState.CloseWait && stateOfConnection != TcpState.Closing && stateOfConnection != TcpState.Unknown)
                 {
                     return true;
                 }

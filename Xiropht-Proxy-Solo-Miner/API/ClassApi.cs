@@ -2,12 +2,14 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Xiropht_Connector_All.Setting;
 
 namespace Xiropht_Proxy_Solo_Miner.API
 {
@@ -116,26 +118,29 @@ namespace Xiropht_Proxy_Solo_Miner.API
                         {
                             using (NetworkStream clientHttpReader = new NetworkStream(_client.Client))
                             {
-                                byte[] buffer = new byte[8192];
-                                int received = await clientHttpReader.ReadAsync(buffer, 0, buffer.Length);
-                                if (received > 0)
+                                using (BufferedStream bufferedStreamNetwork = new BufferedStream(clientHttpReader, ClassConnectorSetting.MaxNetworkPacketSize))
                                 {
-                                    string packet = Encoding.UTF8.GetString(buffer, 0, received);
+                                    byte[] buffer = new byte[8192];
+                                    int received = await bufferedStreamNetwork.ReadAsync(buffer, 0, buffer.Length);
+                                    if (received > 0)
+                                    {
+                                        string packet = Encoding.UTF8.GetString(buffer, 0, received);
 
-                                    packet = Utils.GetStringBetween(packet, "GET", "HTTP");
+                                        packet = Utils.GetStringBetween(packet, "GET", "HTTP");
 
-                                    packet = packet.Replace("/", "");
-                                    packet = packet.Replace(" ", "");
-                                    await HandlePacketHttpAsync(packet);
-                                    break;
-                                }
-                                else
-                                {
-                                    totalWhile++;
-                                }
-                                if (totalWhile >= 8)
-                                {
-                                    break;
+                                        packet = packet.Replace("/", "");
+                                        packet = packet.Replace(" ", "");
+                                        await HandlePacketHttpAsync(packet);
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        totalWhile++;
+                                    }
+                                    if (totalWhile >= 8)
+                                    {
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -320,9 +325,12 @@ namespace Xiropht_Proxy_Solo_Miner.API
 
                 using (var networkStream = new NetworkStream(_client.Client))
                 {
-                    var bytePacket = Encoding.UTF8.GetBytes(packet);
-                    await networkStream.WriteAsync(bytePacket, 0, bytePacket.Length).ConfigureAwait(false);
-                    await networkStream.FlushAsync().ConfigureAwait(false);
+                    using (BufferedStream bufferedStreamNetwork = new BufferedStream(networkStream, ClassConnectorSetting.MaxNetworkPacketSize))
+                    {
+                        var bytePacket = Encoding.UTF8.GetBytes(packet);
+                        await bufferedStreamNetwork.WriteAsync(bytePacket, 0, bytePacket.Length).ConfigureAwait(false);
+                        await bufferedStreamNetwork.FlushAsync().ConfigureAwait(false);
+                    }
                 }
 
             }
