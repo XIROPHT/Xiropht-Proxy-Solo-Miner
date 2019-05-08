@@ -29,3 +29,7 @@ mkbundle Xiropht-Proxy-Solo-Miner.exe -o Xiropht-Proxy-Solo-Miner Xiropht-Connec
 ~~~
 
 **Newtonsoft.Json library is used since version 0.0.6.4R for the API HTTP system: https://github.com/JamesNK/Newtonsoft.Json**
+
+**Developers:**
+
+- Xiropht (Sam Segura)
