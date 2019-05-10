@@ -166,8 +166,23 @@ namespace Xiropht_Proxy_Solo_Miner
             }
         }
 
+
+        /// <summary>
+        /// Event for detect Cancel Key pressed by the user for close the program.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+        {
+            e.Cancel = true;
+            Console.WriteLine("Close proxy solo miner tool.");
+            Process.GetCurrentProcess().Kill();
+        }
+
         static void Main(string[] args)
         {
+            Console.CancelKeyPress += Console_CancelKeyPress;
+
             AppDomain.CurrentDomain.UnhandledException += delegate (object sender, UnhandledExceptionEventArgs args2)
             {
                 var filePath = ConvertPath(Directory.GetCurrentDirectory() + "\\error_proxy_miner.txt");
@@ -320,6 +335,8 @@ namespace Xiropht_Proxy_Solo_Miner
 
                     break;
             }
+
+
         }
     }
 }

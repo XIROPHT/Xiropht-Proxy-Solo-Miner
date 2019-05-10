@@ -481,11 +481,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                                             var minRangeTmp = (float)Math.Round((maxRange / totalMinerConnected) * (i1 - 1), 0);
                                                             var maxRangeTmp = (float)(Math.Round(((maxRange / totalMinerConnected) * i1), 0));
 
-
-                                                            var blocktemplateTmp = "ID=" + CurrentBlockId + "&HASH=" + CurrentBlockHash + "&ALGORITHM=" + CurrentBlockAlgorithm + "&SIZE=" + CurrentBlockSize + "&METHOD=" + CurrentBlockMethod + "&KEY=" + CurrentBlockKey + "&JOB=" + minRangeTmp + ";" + maxRangeTmp + "&REWARD=" + CurrentBlockReward + "&DIFFICULTY=" + CurrentBlockDifficulty + "&TIMESTAMP=" + CurrentBlockTimestampCreate + "&INDICATION=" + CurrentBlockIndication + "&PROXY=YES";
-
-                                                            Console.WriteLine("Send job: " + minRangeTmp + "/" + maxRangeTmp + " range to miner: " + NetworkProxy.ListOfMiners[i].MinerName);
-                                                            if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendCurrentBlockMining + "|" + blocktemplateTmp).ConfigureAwait(false))
+                                                            if (maxRangeTmp == float.PositiveInfinity || maxRangeTmp == float.NegativeInfinity)
                                                             {
                                                                 NetworkProxy.ListOfMiners[i].MinerInitialized = false;
                                                                 NetworkProxy.ListOfMiners[i].MinerConnected = false;
@@ -501,7 +497,44 @@ namespace Xiropht_Proxy_Solo_Miner
                                                             }
                                                             else
                                                             {
-                                                                ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerLastBlockTemplateReceived = DateTimeOffset.Now.ToUnixTimeSeconds();
+                                                                if (minRangeTmp == float.PositiveInfinity || minRangeTmp == float.NegativeInfinity)
+                                                                {
+                                                                    NetworkProxy.ListOfMiners[i].MinerInitialized = false;
+                                                                    NetworkProxy.ListOfMiners[i].MinerConnected = false;
+                                                                    try
+                                                                    {
+                                                                        NetworkProxy.ListOfMiners[i].DisconnectMiner();
+                                                                    }
+                                                                    catch
+                                                                    {
+
+                                                                    }
+                                                                    NetworkProxy.ListOfMiners[i] = null;
+                                                                }
+                                                                else
+                                                                {
+                                                                    var blocktemplateTmp = "ID=" + CurrentBlockId + "&HASH=" + CurrentBlockHash + "&ALGORITHM=" + CurrentBlockAlgorithm + "&SIZE=" + CurrentBlockSize + "&METHOD=" + CurrentBlockMethod + "&KEY=" + CurrentBlockKey + "&JOB=" + minRangeTmp + ";" + maxRangeTmp + "&REWARD=" + CurrentBlockReward + "&DIFFICULTY=" + CurrentBlockDifficulty + "&TIMESTAMP=" + CurrentBlockTimestampCreate + "&INDICATION=" + CurrentBlockIndication + "&PROXY=YES";
+
+                                                                    Console.WriteLine("Send job: " + minRangeTmp + "/" + maxRangeTmp + " range to miner: " + NetworkProxy.ListOfMiners[i].MinerName);
+                                                                    if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendCurrentBlockMining + "|" + blocktemplateTmp).ConfigureAwait(false))
+                                                                    {
+                                                                        NetworkProxy.ListOfMiners[i].MinerInitialized = false;
+                                                                        NetworkProxy.ListOfMiners[i].MinerConnected = false;
+                                                                        try
+                                                                        {
+                                                                            NetworkProxy.ListOfMiners[i].DisconnectMiner();
+                                                                        }
+                                                                        catch
+                                                                        {
+
+                                                                        }
+                                                                        NetworkProxy.ListOfMiners[i] = null;
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerLastBlockTemplateReceived = DateTimeOffset.Now.ToUnixTimeSeconds();
+                                                                    }
+                                                                }
                                                             }
                                                         }
                                                     }
@@ -595,10 +628,8 @@ namespace Xiropht_Proxy_Solo_Miner
                                                         var minRangeTmp = (float)Math.Round((maxRange / totalMinerConnected) * (i1 - 1), 0);
                                                         var maxRangeTmp = (float)(Math.Round(((maxRange / totalMinerConnected) * i1), 0));
 
-                                                        var blocktemplateTmp = "ID=" + CurrentBlockId + "&HASH=" + CurrentBlockHash + "&ALGORITHM=" + CurrentBlockAlgorithm + "&SIZE=" + CurrentBlockSize + "&METHOD=" + CurrentBlockMethod + "&KEY=" + CurrentBlockKey + "&JOB=" + minRangeTmp + ";" + maxRangeTmp + "&REWARD=" + CurrentBlockReward + "&DIFFICULTY=" + CurrentBlockDifficulty + "&TIMESTAMP=" + CurrentBlockTimestampCreate + "&INDICATION=" + CurrentBlockIndication + "&PROXY=YES";
 
-                                                        Console.WriteLine("Send job: " + minRangeTmp + "/" + maxRangeTmp + " range to miner: " + NetworkProxy.ListOfMiners[i].MinerName);
-                                                        if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendCurrentBlockMining + "|" + blocktemplateTmp).ConfigureAwait(false))
+                                                        if (maxRangeTmp == float.PositiveInfinity || maxRangeTmp == float.NegativeInfinity)
                                                         {
                                                             NetworkProxy.ListOfMiners[i].MinerInitialized = false;
                                                             NetworkProxy.ListOfMiners[i].MinerConnected = false;
@@ -614,7 +645,44 @@ namespace Xiropht_Proxy_Solo_Miner
                                                         }
                                                         else
                                                         {
-                                                            ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerLastBlockTemplateReceived = DateTimeOffset.Now.ToUnixTimeSeconds();
+                                                            if (minRangeTmp == float.PositiveInfinity || minRangeTmp == float.NegativeInfinity)
+                                                            {
+                                                                NetworkProxy.ListOfMiners[i].MinerInitialized = false;
+                                                                NetworkProxy.ListOfMiners[i].MinerConnected = false;
+                                                                try
+                                                                {
+                                                                    NetworkProxy.ListOfMiners[i].DisconnectMiner();
+                                                                }
+                                                                catch
+                                                                {
+
+                                                                }
+                                                                NetworkProxy.ListOfMiners[i] = null;
+                                                            }
+                                                            else
+                                                            {
+                                                                var blocktemplateTmp = "ID=" + CurrentBlockId + "&HASH=" + CurrentBlockHash + "&ALGORITHM=" + CurrentBlockAlgorithm + "&SIZE=" + CurrentBlockSize + "&METHOD=" + CurrentBlockMethod + "&KEY=" + CurrentBlockKey + "&JOB=" + minRangeTmp + ";" + maxRangeTmp + "&REWARD=" + CurrentBlockReward + "&DIFFICULTY=" + CurrentBlockDifficulty + "&TIMESTAMP=" + CurrentBlockTimestampCreate + "&INDICATION=" + CurrentBlockIndication + "&PROXY=YES";
+
+                                                                Console.WriteLine("Send job: " + minRangeTmp + "/" + maxRangeTmp + " range to miner: " + NetworkProxy.ListOfMiners[i].MinerName);
+                                                                if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendCurrentBlockMining + "|" + blocktemplateTmp).ConfigureAwait(false))
+                                                                {
+                                                                    NetworkProxy.ListOfMiners[i].MinerInitialized = false;
+                                                                    NetworkProxy.ListOfMiners[i].MinerConnected = false;
+                                                                    try
+                                                                    {
+                                                                        NetworkProxy.ListOfMiners[i].DisconnectMiner();
+                                                                    }
+                                                                    catch
+                                                                    {
+
+                                                                    }
+                                                                    NetworkProxy.ListOfMiners[i] = null;
+                                                                }
+                                                                else
+                                                                {
+                                                                    ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerLastBlockTemplateReceived = DateTimeOffset.Now.ToUnixTimeSeconds();
+                                                                }
+                                                            }
                                                         }
                                                     }
                                                     else
