@@ -280,17 +280,8 @@ namespace Xiropht_Proxy_Solo_Miner
                     ConsoleLog.WriteLine("s - Show proxy stats with miners stats.");
                     break;
                 case "s":
-                    ConsoleLog.WriteLine(">> Invalid share can mean you have get orphaned block <<");
-                    ConsoleLog.WriteLine("Total block unlock: " + NetworkBlockchain.TotalBlockUnlocked);
-                    ConsoleLog.WriteLine("Total block bad unlock: " + NetworkBlockchain.TotalBlockWrong);
-                    if (NetworkBlockchain.IsConnected)
-                    {
-                        ConsoleLog.WriteLine("Network proxy connection to the network status: Connected.");
-                    }
-                    else
-                    {
-                        ConsoleLog.WriteLine("Network proxy connection to the network status: Disconnected.");
-                    }
+
+
                     int totalMinerConnected = 0;
 
                     if (NetworkBlockchain.ListMinerStats.Count > 0)
@@ -331,8 +322,20 @@ namespace Xiropht_Proxy_Solo_Miner
                             ConsoleLog.WriteLine("Miner version: " + version);
                         }
                     }
+
+                    if (NetworkBlockchain.IsConnected)
+                    {
+                        ConsoleLog.WriteLine("Network proxy connection to the network status: Connected.");
+                    }
+                    else
+                    {
+                        ConsoleLog.WriteLine("Network proxy connection to the network status: Disconnected.");
+                    }
                     ConsoleLog.WriteLine("Total miners connected: " + totalMinerConnected);
 
+                    ConsoleLog.WriteLine(">> Invalid share can mean you have get orphaned block <<");
+                    ConsoleLog.WriteLine("Total block unlock: " + NetworkBlockchain.TotalBlockUnlocked);
+                    ConsoleLog.WriteLine("Total block bad unlock: " + NetworkBlockchain.TotalBlockWrong);
                     break;
             }
 

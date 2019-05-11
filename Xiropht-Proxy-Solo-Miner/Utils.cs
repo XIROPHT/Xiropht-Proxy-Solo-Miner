@@ -152,12 +152,8 @@ namespace Xiropht_Proxy_Solo_Miner
 
         public static int GetTotalBlockFound()
         {
-            int totalBlockFound = 0;
-            foreach (var minerObjectBlock in NetworkBlockchain.ListMinerStats)
-            {
-                totalBlockFound += minerObjectBlock.Value.MinerTotalGoodShare;
-            }
-            return totalBlockFound;
+
+            return NetworkBlockchain.TotalBlockUnlocked;
         }
     }
 }

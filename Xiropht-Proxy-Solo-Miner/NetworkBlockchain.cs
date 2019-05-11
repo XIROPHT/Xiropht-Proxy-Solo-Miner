@@ -379,7 +379,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                 {
                                     if (NetworkProxy.ListOfMiners[i].MinerConnected)
                                     {
-                                        if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareAleady).ConfigureAwait(false))
+                                        if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad).ConfigureAwait(false))
                                         {
                                             NetworkProxy.ListOfMiners[i].DisconnectMiner();
                                         }
