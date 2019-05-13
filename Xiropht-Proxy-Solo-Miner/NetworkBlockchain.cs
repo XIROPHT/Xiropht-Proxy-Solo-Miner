@@ -372,6 +372,24 @@ namespace Xiropht_Proxy_Solo_Miner
                             TotalBlockWrong++;
                             ConsoleLog.WriteLine("Block not accepted, stop mining, wait new block.");
                             break;
+                        case ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad:
+                            for (int i = 0; i < NetworkProxy.ListOfMiners.Count; i++)
+                            {
+                                if (i < NetworkProxy.ListOfMiners.Count)
+                                {
+                                    if (NetworkProxy.ListOfMiners[i].MinerConnected)
+                                    {
+                                        if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad).ConfigureAwait(false))
+                                        {
+                                            NetworkProxy.ListOfMiners[i].DisconnectMiner();
+                                        }
+
+                                    }
+                                }
+                            }
+                            TotalBlockWrong++;
+                            ConsoleLog.WriteLine("Block not accepted, stop mining, wait new block.");
+                            break;
                         case ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareAleady:
                             for (int i = 0; i < NetworkProxy.ListOfMiners.Count; i++)
                             {

@@ -146,7 +146,7 @@ namespace Xiropht_Proxy_Solo_Miner.API
                         }
                         catch (Exception error)
                         {
-                            Console.WriteLine("HTTP API - exception error: " + error.Message);
+                            //Console.WriteLine("HTTP API - exception error: " + error.Message);
                             break;
                         }
                     }
