@@ -8,6 +8,8 @@ namespace Xiropht_Proxy_Solo_Miner
 {
     public class Utils
     {
+        private static readonly char[] HexArray = "0123456789ABCDEF".ToCharArray();
+
         public static bool SocketIsConnected(TcpClient socket)
         {
             if (socket != null)
@@ -154,6 +156,49 @@ namespace Xiropht_Proxy_Solo_Miner
         {
 
             return NetworkBlockchain.TotalBlockUnlocked;
+        }
+
+        public static byte[] FromHexString(string @string)
+        {
+            if ((@string.Length & 1) != 0)
+            {
+                throw new Exception("Invalid hex string");
+            }
+            byte[] data = new byte[(@string.Length / 2)];
+            for (int i = 0; i < @string.Length / 2; i++)
+            {
+                data[i] = (byte)((FromHexChar(@string[i * 2]) << 4) | FromHexChar(@string[(i * 2) + 1]));
+            }
+            return data;
+        }
+
+        public static string ToHexString(byte[] bytes)
+        {
+            char[] hexChars = new char[(bytes.Length * 2)];
+            for (int j = 0; j < bytes.Length; j++)
+            {
+                int v = bytes[j] & 255;
+                hexChars[j * 2] = HexArray[(int)((uint)v >> 4)];
+                hexChars[(j * 2) + 1] = HexArray[v & 15];
+            }
+            return new string(hexChars);
+        }
+
+        public static int FromHexChar(char c)
+        {
+            if (c >= '0' && c <= '9')
+            {
+                return c - 48;
+            }
+            if (c >= 'A' && c <= 'F')
+            {
+                return (c - 65) + 10;
+            }
+            if (c >= 'a' && c <= 'f')
+            {
+                return (c - 97) + 10;
+            }
+            throw new Exception("Invalid hex character");
         }
     }
 }
