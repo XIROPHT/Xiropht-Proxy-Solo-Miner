@@ -499,7 +499,6 @@ namespace Xiropht_Proxy_Solo_Miner
                                                             var minRangeTmp = (decimal)Math.Round((maxRange / totalMinerConnected) * (i1 - 1), 0);
                                                             var maxRangeTmp = (decimal)(Math.Round(((maxRange / totalMinerConnected) * i1), 0));
 
-                                                            if (maxRangeTmp == float.PositiveInfinity || maxRangeTmp == float.NegativeInfinity)
                                                             if (maxRangeTmp <= 1 || maxRangeTmp > maxRange)
                                                             {
                                                                 NetworkProxy.ListOfMiners[i].MinerInitialized = false;
