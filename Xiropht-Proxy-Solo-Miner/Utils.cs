@@ -126,27 +126,27 @@ namespace Xiropht_Proxy_Solo_Miner
             return null;
         }
 
-        public static float GetMinerHashrateExpected()
+        public static decimal GetMinerHashrateExpected()
         {
-            float totalHashrateExpected = 0;
+            decimal totalHashrateExpected = 0;
             foreach (var minerObjectHashrate in NetworkBlockchain.ListMinerStats)
             {
                 if (minerObjectHashrate.Value.MinerConnectionStatus)
                 {
-                    totalHashrateExpected += float.Parse(minerObjectHashrate.Value.MinerHashrateExpected);
+                    totalHashrateExpected += decimal.Parse(minerObjectHashrate.Value.MinerHashrateExpected);
                 }
             }
             return totalHashrateExpected;
         }
 
-        public static float GetMinerHashrateCalculated()
+        public static decimal GetMinerHashrateCalculated()
         {
-            float totalHashrateCalculated = 0;
+            decimal totalHashrateCalculated = 0;
             foreach (var minerObjectHashrate in NetworkBlockchain.ListMinerStats)
             {
                 if (minerObjectHashrate.Value.MinerConnectionStatus)
                 {
-                    totalHashrateCalculated += float.Parse(minerObjectHashrate.Value.MinerHashrateCalculated);
+                    totalHashrateCalculated += decimal.Parse(minerObjectHashrate.Value.MinerHashrateCalculated);
                 }
             }
             return totalHashrateCalculated;

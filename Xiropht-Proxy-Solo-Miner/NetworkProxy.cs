@@ -384,7 +384,7 @@ namespace Xiropht_Proxy_Solo_Miner
                             var currentBlockId = 0;
                             if (int.TryParse(NetworkBlockchain.CurrentBlockId, out currentBlockId))
                             {
-                                var differenceBlockId = (float)currentBlockId - NetworkBlockchain.FirstBlockId;
+                                var differenceBlockId = (decimal)currentBlockId - NetworkBlockchain.FirstBlockId;
                                 if (differenceBlockId > 0)
                                 {
                                     var hashrateCalculated = Math.Round(((NetworkBlockchain.ListMinerStats[MinerName].MinerTotalGoodShare / differenceBlockId * 100) * 1024), 0);
@@ -422,14 +422,14 @@ namespace Xiropht_Proxy_Solo_Miner
                                 decimal shareValue = Convert.ToDecimal(BitConverter.ToInt64(shareByte, 0));
                                 if (shareValue > 0)
                                 {
-                                    decimal sumOfWorkValue = shareValue - jobValue;
+                                    decimal sumOfWorkValue =  jobValue - shareValue;
                                     if (sumOfWorkValue > 0)
                                     {
                                         if (sumOfWorkValue >= targetBlockValue)
                                         {
                                             decimal powDifficultyValue = sumOfWorkValue - targetBlockValue;
                                             decimal approximativeEquality = Math.Abs((powDifficultyValue / targetBlockValue) * 100);
-                                            if (approximativeEquality >= 100 && approximativeEquality <= 100.01m) // Max acceptance on the Blockchain
+                                            if (approximativeEquality >= 100 && approximativeEquality <= 100.00001m) // Max acceptance on the Blockchain, will scale up or down proportionally with the difficulty.
                                             {
                                                 NetworkBlockchain.ListMinerStats[MinerName].MinerTotalGoodShare++;
                                                 if (!await NetworkBlockchain.SendPacketAsync(packet, true).ConfigureAwait(false))

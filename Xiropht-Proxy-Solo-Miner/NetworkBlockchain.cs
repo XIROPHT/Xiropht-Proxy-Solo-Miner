@@ -460,8 +460,8 @@ namespace Xiropht_Proxy_Solo_Miner
                     CurrentBlockIndication = splitBlockContent[10].Replace("INDICATION=", "");
 
                     var splitCurrentBlockJob = CurrentBlockJob.Split(new[] { ";" }, StringSplitOptions.None);
-                    var minRange = float.Parse(splitCurrentBlockJob[0]);
-                    var maxRange = float.Parse(splitCurrentBlockJob[1]);
+                    var minRange = decimal.Parse(splitCurrentBlockJob[0]);
+                    var maxRange = decimal.Parse(splitCurrentBlockJob[1]);
 
                     if (ListMinerStats != null)
                     {
@@ -496,10 +496,11 @@ namespace Xiropht_Proxy_Solo_Miner
 
                                                         if (NetworkProxy.ListOfMiners[i].MinerId == minerId)
                                                         {
-                                                            var minRangeTmp = (float)Math.Round((maxRange / totalMinerConnected) * (i1 - 1), 0);
-                                                            var maxRangeTmp = (float)(Math.Round(((maxRange / totalMinerConnected) * i1), 0));
+                                                            var minRangeTmp = (decimal)Math.Round((maxRange / totalMinerConnected) * (i1 - 1), 0);
+                                                            var maxRangeTmp = (decimal)(Math.Round(((maxRange / totalMinerConnected) * i1), 0));
 
                                                             if (maxRangeTmp == float.PositiveInfinity || maxRangeTmp == float.NegativeInfinity)
+                                                            if (maxRangeTmp <= 1 || maxRangeTmp > maxRange)
                                                             {
                                                                 NetworkProxy.ListOfMiners[i].MinerInitialized = false;
                                                                 NetworkProxy.ListOfMiners[i].MinerConnected = false;
@@ -515,7 +516,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                                             }
                                                             else
                                                             {
-                                                                if (minRangeTmp == float.PositiveInfinity || minRangeTmp == float.NegativeInfinity)
+                                                                if (minRangeTmp <= 1 || minRangeTmp > maxRange)
                                                                 {
                                                                     NetworkProxy.ListOfMiners[i].MinerInitialized = false;
                                                                     NetworkProxy.ListOfMiners[i].MinerConnected = false;
@@ -555,6 +556,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                                                 }
                                                             }
                                                         }
+                                                        
                                                     }
                                                     else
                                                     {
@@ -580,8 +582,8 @@ namespace Xiropht_Proxy_Solo_Miner
                                                             {
                                                                 minerJobRangePositionEnd = minerJobRangePositionEnd + minerJobRangePositionStart;
                                                             }
-                                                            var minRangeTmp = (float)Math.Round(minerJobRangePositionStart, 0);
-                                                            var maxRangeTmp = (float)Math.Round(minerJobRangePositionEnd, 0);
+                                                            var minRangeTmp = (decimal)Math.Round(minerJobRangePositionStart, 0);
+                                                            var maxRangeTmp = (decimal)Math.Round(minerJobRangePositionEnd, 0);
 
                                                             if (minRangeTmp <= 0)
                                                             {
@@ -643,11 +645,11 @@ namespace Xiropht_Proxy_Solo_Miner
                                                         i1++;
 
 
-                                                        var minRangeTmp = (float)Math.Round((maxRange / totalMinerConnected) * (i1 - 1), 0);
-                                                        var maxRangeTmp = (float)(Math.Round(((maxRange / totalMinerConnected) * i1), 0));
+                                                        var minRangeTmp = (decimal)Math.Round((maxRange / totalMinerConnected) * (i1 - 1), 0);
+                                                        var maxRangeTmp = (decimal)(Math.Round(((maxRange / totalMinerConnected) * i1), 0));
 
 
-                                                        if (maxRangeTmp == float.PositiveInfinity || maxRangeTmp == float.NegativeInfinity)
+                                                        if (maxRangeTmp <= 1 || maxRangeTmp > maxRange)
                                                         {
                                                             NetworkProxy.ListOfMiners[i].MinerInitialized = false;
                                                             NetworkProxy.ListOfMiners[i].MinerConnected = false;
@@ -663,7 +665,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                                         }
                                                         else
                                                         {
-                                                            if (minRangeTmp == float.PositiveInfinity || minRangeTmp == float.NegativeInfinity)
+                                                            if (minRangeTmp <= 1 || minRangeTmp > maxRange)
                                                             {
                                                                 NetworkProxy.ListOfMiners[i].MinerInitialized = false;
                                                                 NetworkProxy.ListOfMiners[i].MinerConnected = false;
@@ -725,8 +727,8 @@ namespace Xiropht_Proxy_Solo_Miner
                                                         {
                                                             minerJobRangePositionEnd = minerJobRangePositionEnd + minerJobRangePositionStart;
                                                         }
-                                                        var minRangeTmp = (float)Math.Round(minerJobRangePositionStart, 0);
-                                                        var maxRangeTmp = (float)Math.Round(minerJobRangePositionEnd, 0);
+                                                        var minRangeTmp = (decimal)Math.Round(minerJobRangePositionStart, 0);
+                                                        var maxRangeTmp = (decimal)Math.Round(minerJobRangePositionEnd, 0);
 
                                                         if (minRangeTmp <= 0)
                                                         {
