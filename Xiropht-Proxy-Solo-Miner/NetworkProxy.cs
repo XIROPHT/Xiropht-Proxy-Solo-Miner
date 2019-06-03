@@ -412,42 +412,10 @@ namespace Xiropht_Proxy_Solo_Miner
                         }
                         else
                         {
-                            byte[] targetBlockByte = Utils.FromHexString(NetworkBlockchain.CurrentBlockIndication);
-                            decimal targetBlockValue = Convert.ToDecimal(BitConverter.ToInt64(targetBlockByte, 0));
-                            byte[] jobByte = Utils.FromHexString(hashShare);
-                            decimal jobValue = Convert.ToDecimal(BitConverter.ToInt64(jobByte, 0));
-                            if (jobValue > 0)
+                            NetworkBlockchain.ListMinerStats[MinerName].MinerTotalInvalidShare++;
+                            if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad).ConfigureAwait(false))
                             {
-                                byte[] shareByte = Utils.FromHexString(encryptedShare);
-                                decimal shareValue = Convert.ToDecimal(BitConverter.ToInt64(shareByte, 0));
-                                if (shareValue > 0)
-                                {
-                                    decimal sumOfWorkValue =  jobValue - shareValue;
-                                    if (sumOfWorkValue > 0)
-                                    {
-                                        if (sumOfWorkValue >= targetBlockValue)
-                                        {
-                                            decimal powDifficultyValue = sumOfWorkValue - targetBlockValue;
-                                            decimal approximativeEquality = Math.Abs((powDifficultyValue / targetBlockValue) * 100);
-                                            if (approximativeEquality >= 100 && approximativeEquality <= 100.00001m) // Max acceptance on the Blockchain, will scale up or down proportionally with the difficulty.
-                                            {
-                                                NetworkBlockchain.ListMinerStats[MinerName].MinerTotalGoodShare++;
-                                                if (!await NetworkBlockchain.SendPacketAsync(packet, true).ConfigureAwait(false))
-                                                {
-                                                    DisconnectMiner();
-                                                }
-                                            }
-                                            else
-                                            {
-                                                NetworkBlockchain.ListMinerStats[MinerName].MinerTotalInvalidShare++;
-                                                if (!await SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendJobStatus + "|" + ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad).ConfigureAwait(false))
-                                                {
-                                                    DisconnectMiner();
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+                                DisconnectMiner();
                             }
                         }
                         break;
