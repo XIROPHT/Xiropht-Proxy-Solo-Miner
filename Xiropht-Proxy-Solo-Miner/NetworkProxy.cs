@@ -39,16 +39,21 @@ namespace Xiropht_Proxy_Solo_Miner
                 {
                     try
                     {
+                        using (CancellationTokenSource cancelConnect = new CancellationTokenSource(100))
+                        {
+                            await ProxyListener.AcceptTcpClientAsync().ContinueWith(async minerTask =>
+                            {
+                                var tcpMiner = await minerTask;
 
-                        var tcpMiner = await ProxyListener.AcceptTcpClientAsync().ConfigureAwait(false);
-                        string ip = ((IPEndPoint)(tcpMiner.Client.RemoteEndPoint)).Address.ToString();
-                        TotalConnectedMiner++;
+                                string ip = ((IPEndPoint)(tcpMiner.Client.RemoteEndPoint)).Address.ToString();
+                                TotalConnectedMiner++;
 
-                        var cw = new Miner(tcpMiner, ListOfMiners.Count + 1, ip);
-                        ListOfMiners.Add(cw);
+                                var cw = new Miner(tcpMiner, ListOfMiners.Count + 1, ip);
+                                ListOfMiners.Add(cw);
 
-                        await Task.Factory.StartNew(() => cw.HandleMinerAsync(), CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, PriorityScheduler.Lowest).ConfigureAwait(false);
-
+                                await Task.Factory.StartNew(() => cw.HandleMinerAsync(), CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
+                            });
+                        }
                     }
                     catch
                     {
@@ -182,7 +187,7 @@ namespace Xiropht_Proxy_Solo_Miner
         public async Task HandleMinerAsync()
         {
             MinerConnected = true;
-            await Task.Factory.StartNew(CheckMinerConnectionAsync, CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, PriorityScheduler.Lowest).ConfigureAwait(false);
+            await Task.Factory.StartNew(CheckMinerConnectionAsync, CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
 
             try
             {
@@ -212,7 +217,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                     if (received > 0)
                                     {
                                         bufferPacket.packet = Encoding.UTF8.GetString(bufferPacket.buffer, 0, received);
-                                        await Task.Factory.StartNew(() => HandlePacketMinerAsync(bufferPacket.packet), CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, PriorityScheduler.Lowest).ConfigureAwait(false);
+                                        HandlePacketMinerAsync(bufferPacket.packet);
                                     }
                                 }
                             }

@@ -10,22 +10,20 @@ namespace Xiropht_Proxy_Solo_Miner
 
         public static void InitializeLog()
         {
-            WriterLog = new StreamWriter(Program.ConvertPath(Directory.GetCurrentDirectory() + "\\proxy_log.log"))
+            WriterLog = new StreamWriter(Program.ConvertPath(System.AppDomain.CurrentDomain.BaseDirectory + "\\proxy_log.log"))
             {
                 AutoFlush = true
             };
         }
 
-        public static void WriteLine(string log)
+        public static async void WriteLineAsync(string log, int colorId)
         {
-            Console.WriteLine(DateTime.Now + " - " + log);
+            ClassConsole.ConsoleWriteLine(DateTime.Now + " - " + log, colorId);
             if (Config.WriteLog)
             {
-                    Task.Run(async delegate
-                    {
-                        await WriterLog.WriteLineAsync(DateTime.Now + " - " + log).ConfigureAwait(false);
-                    });
+                await WriterLog.WriteLineAsync(DateTime.Now + " - " + log);
             }
         }
+    
     }
 }

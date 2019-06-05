@@ -146,7 +146,7 @@ namespace Xiropht_Proxy_Solo_Miner.API
                         }
                         catch (Exception error)
                         {
-                            //Console.WriteLine("HTTP API - exception error: " + error.Message);
+                            //ClassConsole.ConsoleWriteLine("HTTP API - exception error: " + error.Message);
                             break;
                         }
                     }
@@ -292,7 +292,8 @@ namespace Xiropht_Proxy_Solo_Miner.API
             JObject jsonContent = new JObject
             {
                 { "result", content },
-                { "version", Assembly.GetExecutingAssembly().GetName().Version.ToString() }
+                { "version", Assembly.GetExecutingAssembly().GetName().Version.ToString() },
+                { "timestamp_start" , Program.ProxyDateStart.ToString("F0") }
             };
             return JsonConvert.SerializeObject(jsonContent);
         }
@@ -310,6 +311,7 @@ namespace Xiropht_Proxy_Solo_Miner.API
                 jsonContent.Add(content.Key, content.Value);
             }
             jsonContent.Add("version", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+            jsonContent.Add("timestamp_start", Program.ProxyDateStart.ToString("F0"));
             return JsonConvert.SerializeObject(jsonContent);
         }
 
