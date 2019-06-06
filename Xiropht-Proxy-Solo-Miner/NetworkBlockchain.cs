@@ -119,30 +119,30 @@ namespace Xiropht_Proxy_Solo_Miner
                         NetworkProxy.StopProxy();
                         while (!await ConnectToBlockchainAsync())
                         {
-                            ConsoleLog.WriteLineAsync("Can't connect to the network, retry in 5 seconds..", ClassConsoleColorEnumeration.IndexConsoleRedLog);
+                            ConsoleLog.WriteLine("Can't connect to the network, retry in 5 seconds..", ClassConsoleColorEnumeration.IndexConsoleRedLog);
                             Thread.Sleep(5000);
                         }
-                        ConsoleLog.WriteLineAsync("Connection success, generate dynamic certificate for the network.", ClassConsoleColorEnumeration.IndexConsoleGreenLog);
+                        ConsoleLog.WriteLine("Connection success, generate dynamic certificate for the network.", ClassConsoleColorEnumeration.IndexConsoleGreenLog);
                         Program.NetworkCertificate = ClassUtils.GenerateCertificate();
-                        ConsoleLog.WriteLineAsync("Certificate generate, send to the network..", ClassConsoleColorEnumeration.IndexConsoleYellowLog);
+                        ConsoleLog.WriteLine("Certificate generate, send to the network..", ClassConsoleColorEnumeration.IndexConsoleYellowLog);
                         if (!await SendPacketAsync(Program.NetworkCertificate, false))
                         {
-                            ConsoleLog.WriteLineAsync("Can't send certificate, reconnect now..", ClassConsoleColorEnumeration.IndexConsoleRedLog);
+                            ConsoleLog.WriteLine("Can't send certificate, reconnect now..", ClassConsoleColorEnumeration.IndexConsoleRedLog);
                             IsConnected = false;
                         }
                         else
                         {
                             Thread.Sleep(1000);
-                            ConsoleLog.WriteLineAsync("Certificate sent, start to login..", ClassConsoleColorEnumeration.IndexConsoleYellowLog);
+                            ConsoleLog.WriteLine("Certificate sent, start to login..", ClassConsoleColorEnumeration.IndexConsoleYellowLog);
                             ListenBlockchain();
                             if (!await SendPacketAsync(ClassConnectorSettingEnumeration.MinerLoginType+"|" + Config.WalletAddress, true))
                             {
-                                ConsoleLog.WriteLineAsync("Can't login to the network, reconnect now.", ClassConsoleColorEnumeration.IndexConsoleRedLog);
+                                ConsoleLog.WriteLine("Can't login to the network, reconnect now.", ClassConsoleColorEnumeration.IndexConsoleRedLog);
                                 IsConnected = false;
                             }
                             else
                             {
-                                ConsoleLog.WriteLineAsync("Login successfully sent, waiting confirmation.. (Wait 5 seconds maximum.)", ClassConsoleColorEnumeration.IndexConsoleYellowLog);
+                                ConsoleLog.WriteLine("Login successfully sent, waiting confirmation.. (Wait 5 seconds maximum.)", ClassConsoleColorEnumeration.IndexConsoleYellowLog);
                                 IsConnected = true;
                                 Thread.Sleep(ClassConnectorSetting.MaxTimeoutConnect);
                                 if (!LoginAccepted)
@@ -179,7 +179,7 @@ namespace Xiropht_Proxy_Solo_Miner
                             string packet = await classSeedNodeConnector.ReceivePacketFromSeedNodeAsync(Program.NetworkCertificate, false, true);
                             if (packet == ClassSeedNodeStatus.SeedError)
                             {
-                                ConsoleLog.WriteLineAsync("Connection to network lost, reconnect in 5 seconds..", ClassConsoleColorEnumeration.IndexConsoleRedLog);
+                                ConsoleLog.WriteLine("Connection to network lost, reconnect in 5 seconds..", ClassConsoleColorEnumeration.IndexConsoleRedLog);
                                 IsConnected = false;
                                 break;
                             }
@@ -224,7 +224,7 @@ namespace Xiropht_Proxy_Solo_Miner
                     }
                     catch
                     {
-                        ConsoleLog.WriteLineAsync("Connection to network lost, reconnect in 5 seconds..", ClassConsoleColorEnumeration.IndexConsoleRedLog);
+                        ConsoleLog.WriteLine("Connection to network lost, reconnect in 5 seconds..", ClassConsoleColorEnumeration.IndexConsoleRedLog);
                         IsConnected = false;
                         break;
                     }
@@ -245,7 +245,7 @@ namespace Xiropht_Proxy_Solo_Miner
                 case ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendLoginAccepted:
                     LoginAccepted = true;
                     IsConnected = true;
-                    ConsoleLog.WriteLineAsync("Proxy login accepted, ask mining methods.", ClassConsoleColorEnumeration.IndexConsoleGreenLog);
+                    ConsoleLog.WriteLine("Proxy login accepted, ask mining methods.", ClassConsoleColorEnumeration.IndexConsoleGreenLog);
                     if (!NetworkProxy.ProxyStarted)
                     {
                         NetworkProxy.StartProxy();
@@ -322,7 +322,7 @@ namespace Xiropht_Proxy_Solo_Miner
 
                     if (Blocktemplate != splitPacket[1])
                     {
-                        ConsoleLog.WriteLineAsync("New block to mining: " + splitBlockContent[0], ClassConsoleColorEnumeration.IndexConsoleYellowLog);
+                        ConsoleLog.WriteLine("New block to mining: " + splitBlockContent[0], ClassConsoleColorEnumeration.IndexConsoleYellowLog);
                         Blocktemplate = splitPacket[1];
                         await Task.Factory.StartNew(() => SpreadJobAsync(), CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
                     }
@@ -332,7 +332,7 @@ namespace Xiropht_Proxy_Solo_Miner
                     {
                         case ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareUnlock:
                             TotalBlockUnlocked++;
-                            ConsoleLog.WriteLineAsync("Block accepted, stop mining, wait new block.", ClassConsoleColorEnumeration.IndexConsoleGreenLog);
+                            ConsoleLog.WriteLine("Block accepted, stop mining, wait new block.", ClassConsoleColorEnumeration.IndexConsoleGreenLog);
                             for (int i = 0; i < NetworkProxy.ListOfMiners.Count; i++)
                             {
                                 if (i < NetworkProxy.ListOfMiners.Count)
@@ -364,7 +364,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                 }
                             }
                             TotalBlockWrong++;
-                            ConsoleLog.WriteLineAsync("Block not accepted, stop mining, wait new block.", ClassConsoleColorEnumeration.IndexConsoleRedLog);
+                            ConsoleLog.WriteLine("Block not accepted, stop mining, wait new block.", ClassConsoleColorEnumeration.IndexConsoleRedLog);
                             break;
                         case ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareBad:
                             for (int i = 0; i < NetworkProxy.ListOfMiners.Count; i++)
@@ -382,7 +382,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                 }
                             }
                             TotalBlockWrong++;
-                            ConsoleLog.WriteLineAsync("Block not accepted, stop mining, wait new block.", ClassConsoleColorEnumeration.IndexConsoleRedLog);
+                            ConsoleLog.WriteLine("Block not accepted, stop mining, wait new block.", ClassConsoleColorEnumeration.IndexConsoleRedLog);
                             break;
                         case ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareAleady:
                             for (int i = 0; i < NetworkProxy.ListOfMiners.Count; i++)
@@ -399,7 +399,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                     }
                                 }
                             }
-                            ConsoleLog.WriteLineAsync("Block already mined, stop mining, wait new block.", ClassConsoleColorEnumeration.IndexConsoleRedLog);
+                            ConsoleLog.WriteLine("Block already mined, stop mining, wait new block.", ClassConsoleColorEnumeration.IndexConsoleRedLog);
                             break;
                         case ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.ShareNotExist:
                             for (int i = 0; i < NetworkProxy.ListOfMiners.Count; i++)
@@ -416,7 +416,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                     }
                                 }
                             }
-                            ConsoleLog.WriteLineAsync("Block mined not exist, stop mining, wait new block.", ClassConsoleColorEnumeration.IndexConsoleBlueLog);
+                            ConsoleLog.WriteLine("Block mined not exist, stop mining, wait new block.", ClassConsoleColorEnumeration.IndexConsoleBlueLog);
                             break;
 
                     }
@@ -501,7 +501,7 @@ namespace Xiropht_Proxy_Solo_Miner
 
                                                             var blocktemplateTmp = "ID=" + CurrentBlockId + "&HASH=" + CurrentBlockHash + "&ALGORITHM=" + CurrentBlockAlgorithm + "&SIZE=" + CurrentBlockSize + "&METHOD=" + CurrentBlockMethod + "&KEY=" + CurrentBlockKey + "&JOB=" + minRangeTmp + ";" + maxRangeTmp + "&REWARD=" + CurrentBlockReward + "&DIFFICULTY=" + CurrentBlockDifficulty + "&TIMESTAMP=" + CurrentBlockTimestampCreate + "&INDICATION=" + CurrentBlockIndication + "&PROXY=YES";
 
-                                                            ClassConsole.ConsoleWriteLine("Send job: " + minRangeTmp + "/" + maxRangeTmp + " range to miner: " + NetworkProxy.ListOfMiners[i].MinerName, ClassConsoleColorEnumeration.IndexConsoleYellowLog);
+                                                            ConsoleLog.WriteLine("Send job: " + minRangeTmp + "/" + maxRangeTmp + " range to miner: " + NetworkProxy.ListOfMiners[i].MinerName, ClassConsoleColorEnumeration.IndexConsoleYellowLog);
                                                             if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendCurrentBlockMining + "|" + blocktemplateTmp).ConfigureAwait(false))
                                                             {
                                                                 NetworkProxy.ListOfMiners[i].MinerInitialized = false;
@@ -526,7 +526,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                                     {
                                                         if (NetworkProxy.ListOfMiners[i].MinerId == minerId)
                                                         {
-                                                            ClassConsole.ConsoleWriteLine(NetworkProxy.ListOfMiners[i].MinerName + " select start position range: " + ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyStart + "| select end position range: " + ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyEnd, ClassConsoleColorEnumeration.IndexConsoleYellowLog);
+                                                            ConsoleLog.WriteLine(NetworkProxy.ListOfMiners[i].MinerName + " select start position range: " + ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyStart + " | select end position range: " + ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyEnd, ClassConsoleColorEnumeration.IndexConsoleYellowLog);
                                                             var minerJobRangePosition = ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyStart;
                                                             var minerJobRangePourcentage = ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyEnd;
 
@@ -557,7 +557,7 @@ namespace Xiropht_Proxy_Solo_Miner
 
                                                             var blocktemplateTmp = "ID=" + CurrentBlockId + "&HASH=" + CurrentBlockHash + "&ALGORITHM=" + CurrentBlockAlgorithm + "&SIZE=" + CurrentBlockSize + "&METHOD=" + CurrentBlockMethod + "&KEY=" + CurrentBlockKey + "&JOB=" + minRangeTmp + ";" + maxRangeTmp + "&REWARD=" + CurrentBlockReward + "&DIFFICULTY=" + CurrentBlockDifficulty + "&TIMESTAMP=" + CurrentBlockTimestampCreate + "&INDICATION=" + CurrentBlockIndication + "&PROXY=YES";
 
-                                                            ClassConsole.ConsoleWriteLine("Send job: " + minRangeTmp + "/" + maxRangeTmp + " range to miner: " + NetworkProxy.ListOfMiners[i].MinerName, ClassConsoleColorEnumeration.IndexConsoleYellowLog);
+                                                            ConsoleLog.WriteLine("Send job: " + minRangeTmp + "/" + maxRangeTmp + " range to miner: " + NetworkProxy.ListOfMiners[i].MinerName, ClassConsoleColorEnumeration.IndexConsoleYellowLog);
                                                             if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendCurrentBlockMining + "|" + blocktemplateTmp).ConfigureAwait(false))
                                                             {
                                                                 NetworkProxy.ListOfMiners[i].MinerInitialized = false;
@@ -620,7 +620,7 @@ namespace Xiropht_Proxy_Solo_Miner
 
                                                         var blocktemplateTmp = "ID=" + CurrentBlockId + "&HASH=" + CurrentBlockHash + "&ALGORITHM=" + CurrentBlockAlgorithm + "&SIZE=" + CurrentBlockSize + "&METHOD=" + CurrentBlockMethod + "&KEY=" + CurrentBlockKey + "&JOB=" + minRangeTmp + ";" + maxRangeTmp + "&REWARD=" + CurrentBlockReward + "&DIFFICULTY=" + CurrentBlockDifficulty + "&TIMESTAMP=" + CurrentBlockTimestampCreate + "&INDICATION=" + CurrentBlockIndication + "&PROXY=YES";
 
-                                                        ClassConsole.ConsoleWriteLine("Send job: " + minRangeTmp + "/" + maxRangeTmp + " range to miner: " + NetworkProxy.ListOfMiners[i].MinerName, ClassConsoleColorEnumeration.IndexConsoleYellowLog);
+                                                        ConsoleLog.WriteLine("Send job: " + minRangeTmp + "/" + maxRangeTmp + " range to miner: " + NetworkProxy.ListOfMiners[i].MinerName, ClassConsoleColorEnumeration.IndexConsoleYellowLog);
                                                         if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendCurrentBlockMining + "|" + blocktemplateTmp).ConfigureAwait(false))
                                                         {
                                                             NetworkProxy.ListOfMiners[i].MinerInitialized = false;
@@ -643,7 +643,7 @@ namespace Xiropht_Proxy_Solo_Miner
                                                     }
                                                     else
                                                     {
-                                                        ClassConsole.ConsoleWriteLine(NetworkProxy.ListOfMiners[i].MinerName + " select start position range: " + ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyStart + "| select end position range: " + ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyEnd, ClassConsoleColorEnumeration.IndexConsoleYellowLog);
+                                                        ConsoleLog.WriteLine(NetworkProxy.ListOfMiners[i].MinerName + " select start position range: " + ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyStart + " | select end position range: " + ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyEnd, ClassConsoleColorEnumeration.IndexConsoleYellowLog);
                                                         var minerJobRangePosition = ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyStart;
                                                         var minerJobRangePourcentage = ListMinerStats[NetworkProxy.ListOfMiners[i].MinerName].MinerDifficultyEnd;
 
@@ -676,7 +676,7 @@ namespace Xiropht_Proxy_Solo_Miner
 
                                                         var blocktemplateTmp = "ID=" + CurrentBlockId + "&HASH=" + CurrentBlockHash + "&ALGORITHM=" + CurrentBlockAlgorithm + "&SIZE=" + CurrentBlockSize + "&METHOD=" + CurrentBlockMethod + "&KEY=" + CurrentBlockKey + "&JOB=" + minRangeTmp + ";" + maxRangeTmp + "&REWARD=" + CurrentBlockReward + "&DIFFICULTY=" + CurrentBlockDifficulty + "&TIMESTAMP=" + CurrentBlockTimestampCreate + "&INDICATION=" + CurrentBlockIndication + "&PROXY=YES";
 
-                                                        ClassConsole.ConsoleWriteLine("Send job: " + minRangeTmp + "/" + maxRangeTmp + " range to miner: " + NetworkProxy.ListOfMiners[i].MinerName, ClassConsoleColorEnumeration.IndexConsoleYellowLog);
+                                                        ConsoleLog.WriteLine("Send job: " + minRangeTmp + "/" + maxRangeTmp + " range to miner: " + NetworkProxy.ListOfMiners[i].MinerName, ClassConsoleColorEnumeration.IndexConsoleYellowLog);
                                                         if (!await NetworkProxy.ListOfMiners[i].SendPacketAsync(ClassSoloMiningPacketEnumeration.SoloMiningRecvPacketEnumeration.SendCurrentBlockMining + "|" + blocktemplateTmp).ConfigureAwait(false))
                                                         {
                                                             NetworkProxy.ListOfMiners[i].MinerInitialized = false;

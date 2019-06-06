@@ -24,7 +24,7 @@ namespace Xiropht_Proxy_Solo_Miner
             ExceptionUnexpectedHandler();
 
             Thread.CurrentThread.Name = Path.GetFileName(Environment.GetCommandLineArgs()[0]);
-            ConsoleLog.WriteLineAsync("Xiropht Proxy Solo Miner - " + Assembly.GetExecutingAssembly().GetName().Version + "R", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+            ConsoleLog.WriteLine("Xiropht Proxy Solo Miner - " + Assembly.GetExecutingAssembly().GetName().Version + "R", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
 
             ReadConfig();
 
@@ -32,18 +32,18 @@ namespace Xiropht_Proxy_Solo_Miner
             if (Config.WriteLog)
             {
                 ConsoleLog.InitializeLog();
-                ConsoleLog.WriteLineAsync("Write Log Enabled.", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                ConsoleLog.WriteLine("Write Log Enabled.", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
             }
 
-            ConsoleLog.WriteLineAsync("Wallet Address selected: " + Config.WalletAddress, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
-            ConsoleLog.WriteLineAsync("Proxy IP Selected: " + Config.ProxyIP, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
-            ConsoleLog.WriteLineAsync("Proxy Port Selected: " + Config.ProxyPort, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+            ConsoleLog.WriteLine("Wallet Address selected: " + Config.WalletAddress, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+            ConsoleLog.WriteLine("Proxy IP Selected: " + Config.ProxyIP, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+            ConsoleLog.WriteLine("Proxy Port Selected: " + Config.ProxyPort, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
 
             if (Config.EnableApi)
             {
-                ConsoleLog.WriteLineAsync("Start HTTP API..", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                ConsoleLog.WriteLine("Start HTTP API..", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
                 ClassApi.StartApiHttpServer();
-                ConsoleLog.WriteLineAsync("HTTP API started.", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                ConsoleLog.WriteLine("HTTP API started.", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
             }
 
             ThreadCheckNetworkConnection = new Thread(async delegate ()
@@ -53,28 +53,28 @@ namespace Xiropht_Proxy_Solo_Miner
                 {
                     while (!await NetworkBlockchain.ConnectToBlockchainAsync())
                     {
-                        ConsoleLog.WriteLineAsync("Can't connect to the network, retry in 5 seconds..", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                        ConsoleLog.WriteLine("Can't connect to the network, retry in 5 seconds..", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
                         Thread.Sleep(5000);
                     }
-                    ConsoleLog.WriteLineAsync("Connection success, generate dynamic certificate for the network.", ClassConsoleColorEnumeration.IndexConsoleGreenLog);
+                    ConsoleLog.WriteLine("Connection success, generate dynamic certificate for the network.", ClassConsoleColorEnumeration.IndexConsoleGreenLog);
                     NetworkCertificate = ClassUtils.GenerateCertificate();
-                    ConsoleLog.WriteLineAsync("Certificate generate, send to the network..", ClassConsoleColorEnumeration.IndexConsoleYellowLog);
+                    ConsoleLog.WriteLine("Certificate generate, send to the network..", ClassConsoleColorEnumeration.IndexConsoleYellowLog);
                     if (!await NetworkBlockchain.SendPacketAsync(NetworkCertificate, false))
                     {
-                        ConsoleLog.WriteLineAsync("Can't send certificate, reconnect now..", ClassConsoleColorEnumeration.IndexConsoleRedLog);
+                        ConsoleLog.WriteLine("Can't send certificate, reconnect now..", ClassConsoleColorEnumeration.IndexConsoleRedLog);
                     }
                     else
                     {
-                        ConsoleLog.WriteLineAsync("Certificate sent, start to login..", ClassConsoleColorEnumeration.IndexConsoleYellowLog);
+                        ConsoleLog.WriteLine("Certificate sent, start to login..", ClassConsoleColorEnumeration.IndexConsoleYellowLog);
                         NetworkBlockchain.ListenBlockchain();
                         Thread.Sleep(1000);
                         if (!await NetworkBlockchain.SendPacketAsync(ClassConnectorSettingEnumeration.MinerLoginType + "|" + Config.WalletAddress, true))
                         {
-                            ConsoleLog.WriteLineAsync("Can't login to the network, reconnect now.", ClassConsoleColorEnumeration.IndexConsoleRedLog);
+                            ConsoleLog.WriteLine("Can't login to the network, reconnect now.", ClassConsoleColorEnumeration.IndexConsoleRedLog);
                         }
                         else
                         {
-                            ConsoleLog.WriteLineAsync("Login successfully sent, waiting confirmation..", ClassConsoleColorEnumeration.IndexConsoleYellowLog);
+                            ConsoleLog.WriteLine("Login successfully sent, waiting confirmation..", ClassConsoleColorEnumeration.IndexConsoleYellowLog);
                             connectSuccess = true;
                         }
                     }
@@ -145,7 +145,7 @@ namespace Xiropht_Proxy_Solo_Miner
         private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
         {
             e.Cancel = true;
-            ClassConsole.ConsoleWriteLine("Close proxy solo miner tool.", ClassConsoleColorEnumeration.IndexConsoleRedLog);
+            ConsoleLog.WriteLine("Close proxy solo miner tool.", ClassConsoleColorEnumeration.IndexConsoleRedLog);
             Process.GetCurrentProcess().Kill();
         }
 
@@ -158,8 +158,8 @@ namespace Xiropht_Proxy_Solo_Miner
             switch (command)
             {
                 case "h":
-                    ConsoleLog.WriteLineAsync("h - Show command list.", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
-                    ConsoleLog.WriteLineAsync("s - Show proxy stats with miners stats.", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                    ConsoleLog.WriteLine("h - Show command list.", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                    ConsoleLog.WriteLine("s - Show proxy stats with miners stats.", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
                     break;
                 case "s":
 
@@ -172,53 +172,53 @@ namespace Xiropht_Proxy_Solo_Miner
                         {
                             if (minerStats.Value.MinerDifficultyStart == 0 && minerStats.Value.MinerDifficultyEnd == 0)
                             {
-                                ConsoleLog.WriteLineAsync("Miner name: " + minerStats.Key + " - Select range: Automatic - IP: " + minerStats.Value.MinerIp, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                                ConsoleLog.WriteLine("Miner name: " + minerStats.Key + " - Select range: Automatic - IP: " + minerStats.Value.MinerIp, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
                             }
                             else
                             {
-                                ConsoleLog.WriteLineAsync("Miner name: " + minerStats.Key + " - Select range: " + minerStats.Value.MinerDifficultyStart + "|" + minerStats.Value.MinerDifficultyEnd + " - IP: " + minerStats.Value.MinerIp, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                                ConsoleLog.WriteLine("Miner name: " + minerStats.Key + " - Select range: " + minerStats.Value.MinerDifficultyStart + "|" + minerStats.Value.MinerDifficultyEnd + " - IP: " + minerStats.Value.MinerIp, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
                             }
                             if (minerStats.Value.MinerConnectionStatus)
                             {
-                                ConsoleLog.WriteLineAsync("Miner status: Connected.", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                                ConsoleLog.WriteLine("Miner status: Connected.", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
                                 totalMinerConnected++;
                             }
                             else
                             {
-                                ConsoleLog.WriteLineAsync("Miner status: Disconnected.", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                                ConsoleLog.WriteLine("Miner status: Disconnected.", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
                             }
-                            ConsoleLog.WriteLineAsync("Miner total share: " + minerStats.Value.MinerTotalShare, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
-                            ConsoleLog.WriteLineAsync("Miner total good share: " + minerStats.Value.MinerTotalGoodShare, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
-                            ConsoleLog.WriteLineAsync("Miner total invalid share: " + minerStats.Value.MinerTotalInvalidShare, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
-                            ConsoleLog.WriteLineAsync("Miner Hashrate Expected: " + minerStats.Value.MinerHashrateExpected, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                            ConsoleLog.WriteLine("Miner total share: " + minerStats.Value.MinerTotalShare, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                            ConsoleLog.WriteLine("Miner total good share: " + minerStats.Value.MinerTotalGoodShare, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                            ConsoleLog.WriteLine("Miner total invalid share: " + minerStats.Value.MinerTotalInvalidShare, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                            ConsoleLog.WriteLine("Miner Hashrate Expected: " + minerStats.Value.MinerHashrateExpected, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
 
 
 
-                            ConsoleLog.WriteLineAsync("Miner Hashrate Calculated from blocks found: " + minerStats.Value.MinerHashrateCalculated, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                            ConsoleLog.WriteLine("Miner Hashrate Calculated from blocks found: " + minerStats.Value.MinerHashrateCalculated, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
 
                             string version = minerStats.Value.MinerVersion;
                             if (string.IsNullOrEmpty(version))
                             {
                                 version = "Unknown";
                             }
-                            ConsoleLog.WriteLineAsync("Miner version: " + version, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                            ConsoleLog.WriteLine("Miner version: " + version, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
                         }
                     }
 
                     if (NetworkBlockchain.IsConnected)
                     {
-                        ConsoleLog.WriteLineAsync("Network proxy connection to the network status: Connected.", ClassConsoleColorEnumeration.IndexConsoleGreenLog);
+                        ConsoleLog.WriteLine("Network proxy connection to the network status: Connected.", ClassConsoleColorEnumeration.IndexConsoleGreenLog);
                     }
                     else
                     {
-                        ConsoleLog.WriteLineAsync("Network proxy connection to the network status: Disconnected.", ClassConsoleColorEnumeration.IndexConsoleRedLog);
+                        ConsoleLog.WriteLine("Network proxy connection to the network status: Disconnected.", ClassConsoleColorEnumeration.IndexConsoleRedLog);
                     }
-                    ConsoleLog.WriteLineAsync("Total miners connected: " + totalMinerConnected, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                    ConsoleLog.WriteLine("Total miners connected: " + totalMinerConnected, ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
 
-                    ConsoleLog.WriteLineAsync(">> Invalid share can mean the share is invalid or already found.<<", ClassConsoleColorEnumeration.IndexConsoleYellowLog);
-                    ConsoleLog.WriteLineAsync(">> Only total block unlocked confirmed counter retrieve you the right amount of blocks found.<<", ClassConsoleColorEnumeration.IndexConsoleYellowLog);
-                    ConsoleLog.WriteLineAsync("Total block unlocked confirmed: " + NetworkBlockchain.TotalBlockUnlocked, ClassConsoleColorEnumeration.IndexConsoleGreenLog);
-                    ConsoleLog.WriteLineAsync("Total block bad/orphan received: " + NetworkBlockchain.TotalBlockWrong, ClassConsoleColorEnumeration.IndexConsoleRedLog);
+                    ConsoleLog.WriteLine(">> Invalid share can mean the share is invalid or already found.<<", ClassConsoleColorEnumeration.IndexConsoleYellowLog);
+                    ConsoleLog.WriteLine(">> Only total block unlocked confirmed counter retrieve you the right amount of blocks found.<<", ClassConsoleColorEnumeration.IndexConsoleYellowLog);
+                    ConsoleLog.WriteLine("Total block unlocked confirmed: " + NetworkBlockchain.TotalBlockUnlocked, ClassConsoleColorEnumeration.IndexConsoleGreenLog);
+                    ConsoleLog.WriteLine("Total block bad/orphan received: " + NetworkBlockchain.TotalBlockWrong, ClassConsoleColorEnumeration.IndexConsoleRedLog);
                     break;
             }
 
@@ -294,7 +294,7 @@ namespace Xiropht_Proxy_Solo_Miner
                         else if (line.Contains("WRITE_LOG="))
                         {
                             string choose = line.Replace("WRITE_LOG=", "").ToLower();
-                            if (choose == "y")
+                            if (choose == "y" || choose == "true")
                             {
                                 Config.WriteLog = true;
                             }
@@ -302,7 +302,7 @@ namespace Xiropht_Proxy_Solo_Miner
                         else if (line.Contains("ENABLE_API="))
                         {
                             string choose = line.Replace("ENABLE_API=", "").ToLower();
-                            if (choose == "y")
+                            if (choose == "y" || choose == "true")
                             {
                                 Config.EnableApi = true;
                             }
@@ -324,20 +324,20 @@ namespace Xiropht_Proxy_Solo_Miner
             else // First initialization
             {
                 File.Create(GetCurrentPathFile()).Close();
-                ClassConsole.ConsoleWriteLine("No config.ini found, first initialization:", ClassConsoleColorEnumeration.IndexConsoleRedLog);
-                ClassConsole.ConsoleWriteLine("Write your wallet address: ", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                ConsoleLog.WriteLine("No config.ini found, first initialization:", ClassConsoleColorEnumeration.IndexConsoleRedLog);
+                ConsoleLog.WriteLine("Write your wallet address: ", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
                 Config.WalletAddress = Console.ReadLine();
-                ClassConsole.ConsoleWriteLine("Write an IP to bind [0.0.0.0 for listen on every network cards]: ", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                ConsoleLog.WriteLine("Write an IP to bind [0.0.0.0 for listen on every network cards]: ", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
                 Config.ProxyIP = Console.ReadLine();
-                ClassConsole.ConsoleWriteLine("Select a port to bind: ", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                ConsoleLog.WriteLine("Select a port to bind: ", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
                 Config.ProxyPort = int.Parse(Console.ReadLine());
-                ClassConsole.ConsoleWriteLine("Do you want enable log system ? [Y/N]: ", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                ConsoleLog.WriteLine("Do you want enable log system ? [Y/N]: ", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
                 string choose = Console.ReadLine();
                 if (choose.ToLower() == "y")
                 {
                     Config.WriteLog = true;
                 }
-                ClassConsole.ConsoleWriteLine("Do you want to enable the API system? [Y/N]: ", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                ConsoleLog.WriteLine("Do you want to enable the API system? [Y/N]: ", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
                 choose = Console.ReadLine();
                 if (choose.ToLower() == "y")
                 {
@@ -345,7 +345,7 @@ namespace Xiropht_Proxy_Solo_Miner
                 }
                 if (Config.EnableApi)
                 {
-                    ClassConsole.ConsoleWriteLine("Then, do you want to select your own API port? [Default 8000]: ", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
+                    ConsoleLog.WriteLine("Then, do you want to select your own API port? [Default 8000]: ", ClassConsoleColorEnumeration.IndexConsoleMagentaLog);
                     choose = Console.ReadLine();
                     int port = 0;
                     if (int.TryParse(choose, out port))

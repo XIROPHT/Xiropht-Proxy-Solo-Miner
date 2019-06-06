@@ -48,10 +48,14 @@ namespace Xiropht_Proxy_Solo_Miner
                                 string ip = ((IPEndPoint)(tcpMiner.Client.RemoteEndPoint)).Address.ToString();
                                 TotalConnectedMiner++;
 
-                                var cw = new Miner(tcpMiner, ListOfMiners.Count + 1, ip);
-                                ListOfMiners.Add(cw);
-
-                                await Task.Factory.StartNew(() => cw.HandleMinerAsync(), CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
+                                await Task.Factory.StartNew(async () =>
+                                {
+                                    using (var cw = new Miner(tcpMiner, ListOfMiners.Count + 1, ip))
+                                    {
+                                        ListOfMiners.Add(cw);
+                                        await cw.HandleMinerAsync();
+                                    }
+                                }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
                             });
                         }
                     }
@@ -122,8 +126,36 @@ namespace Xiropht_Proxy_Solo_Miner
     }
 
 
-    public class Miner
+    public class Miner : IDisposable
     {
+        #region Disposing Part Implementation 
+
+        private bool _disposed;
+
+        ~Miner()
+        {
+            Dispose(false);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                }
+            }
+
+            _disposed = true;
+        }
+
+        #endregion
         /// <summary>
         /// Miner setting and status.
         /// </summary>
@@ -187,7 +219,7 @@ namespace Xiropht_Proxy_Solo_Miner
         public async Task HandleMinerAsync()
         {
             MinerConnected = true;
-            await Task.Factory.StartNew(CheckMinerConnectionAsync, CancellationToken.None, TaskCreationOptions.RunContinuationsAsynchronously, TaskScheduler.Current).ConfigureAwait(false);
+            await Task.Factory.StartNew(CheckMinerConnectionAsync, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
 
             try
             {
