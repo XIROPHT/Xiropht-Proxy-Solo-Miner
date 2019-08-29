@@ -39,25 +39,24 @@ namespace Xiropht_Proxy_Solo_Miner
                 {
                     try
                     {
-                        using (CancellationTokenSource cancelConnect = new CancellationTokenSource(100))
+
+                        await ProxyListener.AcceptTcpClientAsync().ContinueWith(async minerTask =>
                         {
-                            await ProxyListener.AcceptTcpClientAsync().ContinueWith(async minerTask =>
+                            var tcpMiner = await minerTask;
+
+                            string ip = ((IPEndPoint)(tcpMiner.Client.RemoteEndPoint)).Address.ToString();
+                            TotalConnectedMiner++;
+
+                            await Task.Factory.StartNew(async () =>
                             {
-                                var tcpMiner = await minerTask;
-
-                                string ip = ((IPEndPoint)(tcpMiner.Client.RemoteEndPoint)).Address.ToString();
-                                TotalConnectedMiner++;
-
-                                await Task.Factory.StartNew(async () =>
+                                using (var cw = new Miner(tcpMiner, ListOfMiners.Count + 1, ip))
                                 {
-                                    using (var cw = new Miner(tcpMiner, ListOfMiners.Count + 1, ip))
-                                    {
-                                        ListOfMiners.Add(cw);
-                                        await cw.HandleMinerAsync();
-                                    }
-                                }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
-                            });
-                        }
+                                    ListOfMiners.Add(cw);
+                                    await cw.HandleMinerAsync();
+                                }
+                            }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
+                        });
+
                     }
                     catch
                     {
